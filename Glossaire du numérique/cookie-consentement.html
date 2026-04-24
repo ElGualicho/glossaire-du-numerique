@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les Cookies</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #061d33;
+  --accent:    #60b2c8;
+  --white:     #ffffff;
+  --muted:     rgba(255,255,255,0.45);
+  --border-dk: rgba(255,255,255,0.10);
+  --success:   #3dba7a;
+  --danger:    #e05252;
+  --warning:   #f59e0b;
+  /* site palette */
+  --red:       #c41e3a;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--white);
+}
+
+/* ═════════════════════════════════════
+   OUTER LAYOUT
+═════════════════════════════════════ */
+.layout {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 12px;
+  gap: 10px;
+}
+
+/* ═════════════════════════════════════
+   SITE WRAP (browser frame)
+═════════════════════════════════════ */
+.site-wrap {
+  flex: 1;
+  min-height: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+  position: relative;
+  background: #f5f5f5;
+}
+
+/* ═════════════════════════════════════
+   FAKE NEWSPAPER WEBSITE
+═════════════════════════════════════ */
+.fake-site {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.3s;
+  background: #f5f5f5;
+}
+.fake-site.dimmed { filter: blur(1.5px) brightness(0.8); }
+
+/* Nav */
+.s-nav {
+  background: #fff;
+  border-bottom: 3px solid var(--red);
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.s-logo { font-size: 1.05rem; font-weight: 900; color: var(--red); letter-spacing: -0.5px; }
+.s-nav-links { display: flex; }
+.snl {
+  font-size: 0.7rem; color: #444; padding: 0 11px;
+  height: 44px; display: flex; align-items: center;
+  border-bottom: 3px solid transparent; margin-bottom: -3px;
+  font-weight: 500; white-space: nowrap;
+}
+.snl.a { color: var(--red); border-bottom-color: var(--red); }
+
+/* Breaking ticker */
+.s-ticker {
+  background: var(--red); padding: 4px 18px;
+  font-size: 0.65rem; color: rgba(255,255,255,0.9);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.tick-lbl {
+  background: #fff; color: var(--red);
+  padding: 1px 6px; border-radius: 3px;
+  font-weight: 700; font-size: 0.6rem;
+  text-transform: uppercase; flex-shrink: 0;
+}
+
+/* Hero */
+.s-hero {
+  background: #1a1a2e; display: flex;
+  height: 130px; flex-shrink: 0; overflow: hidden;
+}
+.hero-img {
+  width: 180px; flex-shrink: 0;
+  background: linear-gradient(135deg, #2d3561, var(--red));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem;
+}
+.hero-txt { flex: 1; padding: 14px 18px; }
+.hero-tag { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #f0a500; font-weight: 700; margin-bottom: 4px; }
+.hero-h1  { font-size: 0.88rem; font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: 5px; }
+.hero-sub { font-size: 0.69rem; color: rgba(255,255,255,0.5); }
+
+/* Grid */
+.s-grid {
+  flex: 1; padding: 12px 18px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  background: #f5f5f5; overflow: hidden;
+}
+.art {
+  background: #fff; border-radius: 5px;
+  overflow: hidden; border: 1px solid #e8e8e8;
+}
+.art-img {
+  height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+.art-body { padding: 7px 9px; }
+.art-tag   { font-size: 0.57rem; color: var(--red); font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+.art-title { font-size: 0.69rem; color: #1a1a1a; font-weight: 600; line-height: 1.3; }
+
+/* ═════════════════════════════════════
+   COOKIE BANNER (bottom)
+═════════════════════════════════════ */
+.cookie-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.32);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 14px; z-index: 10;
+}
+.cookie-banner {
+  background: #fff; border-radius: 12px;
+  padding: 16px 18px 14px;
+  width: 100%; max-width: 680px;
+  box-shadow: 0 -4px 40px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.12);
+  border: 1px solid #e0e0e0;
+  animation: slideUp 0.4s cubic-bezier(.22,.8,.2,1) both;
+}
+@keyframes slideUp {
+  from { transform: translateY(18px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.cb-top { display: flex; gap: 12px; margin-bottom: 12px; }
+.cb-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+.cb-title { font-size: 0.88rem; font-weight: 700; color: #1a1a1a; margin-bottom: 3px; }
+.cb-desc  { font-size: 0.72rem; color: #555; line-height: 1.5; }
+.cb-btns  { display: flex; gap: 7px; justify-content: flex-end; flex-wrap: wrap; }
+
+.cb-btn {
+  font-size: 0.74rem; border-radius: 6px; padding: 8px 14px;
+  cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600;
+  border: 1.5px solid; transition: all 0.18s; white-space: nowrap;
+}
+.cb-btn:active { transform: scale(0.97); }
+.cb-link    { color: #555;  background: none; border-color: #ddd; }
+.cb-link:hover { background: #f5f5f5; border-color: #bbb; }
+.cb-refuse  { color: #333;  background: none; border-color: #bbb; }
+.cb-refuse:hover { background: #f0f0f0; }
+.cb-accept  { color: #fff;  background: #0066cc; border-color: #0066cc; padding: 8px 22px; }
+.cb-accept:hover { background: #0052a3; border-color: #0052a3; }
+
+/* Nudge label on accept button */
+.cb-nudge {
+  font-size: 0.58rem; background: #fff3cd; color: #856404;
+  padding: 1px 6px; border-radius: 20px;
+  position: absolute; top: -10px; right: 8px;
+  font-weight: 700; white-space: nowrap;
+  pointer-events: none;
+}
+.cb-accept-wrap { position: relative; display: inline-block; }
+
+/* ═════════════════════════════════════
+   SETTINGS MODAL
+═════════════════════════════════════ */
+.modal-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 20; padding: 16px; display: none;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff; border-radius: 12px;
+  width: 100%; max-width: 440px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+  animation: modalIn 0.28s cubic-bezier(.22,.8,.2,1) both;
+  overflow: hidden;
+}
+@keyframes modalIn {
+  from { transform: scale(0.93); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.modal-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; border-bottom: 1px solid #e8e8e8;
+}
+.modal-hd-title { font-size: 0.88rem; font-weight: 700; color: #1a1a1a; }
+.modal-close { background: none; border: none; font-size: 1.15rem; cursor: pointer; color: #888; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+.modal-close:hover { background: #f0f0f0; }
+
+.modal-body { max-height: 260px; overflow-y: auto; }
+.cat-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 16px; border-bottom: 1px solid #f2f2f2;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-info { flex: 1; }
+.cat-name { font-size: 0.8rem; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+.cat-desc { font-size: 0.69rem; color: #666; line-height: 1.4; }
+
+/* Toggle */
+.tgl { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; cursor: pointer; }
+.tgl input { opacity: 0; width: 0; height: 0; position: absolute; }
+.tgl-track {
+  position: absolute; inset: 0; border-radius: 10px;
+  background: #ccc; transition: background 0.22s;
+}
+.tgl input:checked + .tgl-track { background: #0066cc; }
+.tgl-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  transition: transform 0.22s;
+}
+.tgl input:checked + .tgl-track .tgl-thumb { transform: translateX(16px); }
+.tgl-always {
+  font-size: 0.6rem; background: #e8f5ee; color: #1a6e44;
+  padding: 2px 8px; border-radius: 20px; font-weight: 700;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+.modal-ft {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding: 11px 16px; border-top: 1px solid #e8e8e8;
+}
+.mf-refuse {
+  font-size: 0.74rem; color: #333; background: none;
+  border: 1.5px solid #bbb; border-radius: 6px; padding: 8px 13px;
+  cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600;
+  transition: all 0.18s;
+}
+.mf-refuse:hover { background: #f0f0f0; }
+.mf-save {
+  font-size: 0.74rem; color: #fff; background: #0066cc;
+  border: none; border-radius: 6px; padding: 8px 18px;
+  cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 700;
+  transition: background 0.18s;
+}
+.mf-save:hover { background: #0052a3; }
+
+/* ═════════════════════════════════════
+   RESULT PANEL
+═════════════════════════════════════ */
+.result-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: flex-end; justify-content: center;
+  padding: 14px; z-index: 30;
+}
+.result-overlay.show { display: flex; }
+.result-card {
+  background: #fff; border-radius: 12px;
+  padding: 16px 18px; width: 100%; max-width: 640px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  border: 1px solid #e0e0e0;
+  animation: slideUp 0.32s cubic-bezier(.22,.8,.2,1) both;
+}
+.rc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.rc-icon { font-size: 1.4rem; }
+.rc-title { font-size: 0.88rem; font-weight: 700; color: #1a1a1a; }
+
+.rc-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 11px; }
+.rcat {
+  font-size: 0.7rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  display: flex; align-items: center; gap: 4px;
+}
+.rcat.on  { background: rgba(61,186,122,0.12); color: #1a6e44; }
+.rcat.off { background: rgba(224,82,82,0.09);  color: #b03030; }
+
+.rc-msg {
+  font-size: 0.75rem; color: #444; line-height: 1.55;
+  padding: 9px 12px; border-radius: 7px;
+  margin-bottom: 11px; border-left: 3px solid;
+}
+.rc-msg.warn { background: #fffbeb; border-color: var(--warning); }
+.rc-msg.ok   { background: #f0faf5; border-color: var(--success); }
+.rc-msg.info { background: #f0f7fb; border-color: var(--accent); }
+
+.rc-footer { display: flex; align-items: center; gap: 12px; }
+.rc-tip { flex: 1; font-size: 0.69rem; color: #888; line-height: 1.45; font-style: italic; }
+.rc-retry {
+  font-size: 0.74rem; color: #333; background: none;
+  border: 1.5px solid #ccc; border-radius: 6px; padding: 7px 15px;
+  cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600;
+  transition: all 0.18s; white-space: nowrap; flex-shrink: 0;
+}
+.rc-retry:hover { background: #f5f5f5; border-color: #999; }
+
+/* ═════════════════════════════════════
+   INSTRUCTION BAR
+═════════════════════════════════════ */
+.instr {
+  flex-shrink: 0; display: flex; align-items: center; gap: 12px;
+  padding: 9px 15px; border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-dk);
+}
+.instr-icon { font-size: 1rem; flex-shrink: 0; }
+.instr-text { flex: 1; font-size: 0.79rem; color: rgba(255,255,255,0.88); line-height: 1.4; }
+.instr-text strong { color: var(--accent); }
+
+.path-track { display: flex; gap: 6px; flex-shrink: 0; }
+.pt {
+  font-size: 0.63rem; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; border: 1px solid; white-space: nowrap;
+  transition: all 0.3s;
+}
+.pt.pending { color: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.15); background: none; }
+.pt.done    { color: #1a6e44; border-color: rgba(61,186,122,0.5); background: rgba(61,186,122,0.12); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── SITE WRAP ── -->
+  <div class="site-wrap">
+
+    <!-- ── FAKE WEBSITE ── -->
+    <div class="fake-site" id="fakeSite">
+      <div class="s-nav">
+        <div class="s-logo">Midi Infos</div>
+        <div class="s-nav-links">
+          <div class="snl a">Actualités</div>
+          <div class="snl">Région</div>
+          <div class="snl">Sport</div>
+          <div class="snl">Santé</div>
+          <div class="snl">Culture</div>
+        </div>
+      </div>
+      <div class="s-ticker">
+        <span class="tick-lbl">En direct</span>
+        Castelnau-le-Lez : inauguration du nouveau pôle numérique samedi prochain à 10h
+      </div>
+      <div class="s-hero">
+        <div class="hero-img">🏛️</div>
+        <div class="hero-txt">
+          <div class="hero-tag">À la une · Hérault</div>
+          <div class="hero-h1">Le nouveau complexe sportif de Castelnau-le-Lez ouvrira ses portes ce printemps</div>
+          <div class="hero-sub">Après deux ans de travaux, l'équipement de 4 800 m² accueillera dès avril gymnastes et nageurs · Il y a 2 h</div>
+        </div>
+      </div>
+      <div class="s-grid">
+        <div class="art">
+          <div class="art-img" style="background:linear-gradient(135deg,#e8f4f8,#b8d8e8)">🌤️</div>
+          <div class="art-body">
+            <div class="art-tag">Météo</div>
+            <div class="art-title">Un beau week-end ensoleillé attendu dans tout l'Hérault</div>
+          </div>
+        </div>
+        <div class="art">
+          <div class="art-img" style="background:linear-gradient(135deg,#e8f0e8,#b8d4b8)">🚊</div>
+          <div class="art-body">
+            <div class="art-tag">Transport</div>
+            <div class="art-title">Les nouvelles lignes de tramway inaugurées ce mardi matin</div>
+          </div>
+        </div>
+        <div class="art">
+          <div class="art-img" style="background:linear-gradient(135deg,#f4e8f0,#d8b8d0)">💊</div>
+          <div class="art-body">
+            <div class="art-tag">Santé</div>
+            <div class="art-title">Les centres de vaccination ouverts le samedi à partir du 5 avril</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /fake-site -->
+
+    <!-- ── COOKIE BANNER ── -->
+    <div class="cookie-overlay" id="cookieOverlay">
+      <div class="cookie-banner">
+        <div class="cb-top">
+          <div class="cb-icon">🍪</div>
+          <div>
+            <div class="cb-title">Ce site utilise des cookies</div>
+            <div class="cb-desc">Nous utilisons des cookies pour améliorer votre expérience, mesurer notre audience et vous proposer des publicités personnalisées. Vous pouvez accepter, refuser ou paramétrer vos choix.</div>
+          </div>
+        </div>
+        <div class="cb-btns">
+          <button class="cb-btn cb-link" onclick="openSettings()">⚙️ Paramétrer</button>
+          <button class="cb-btn cb-refuse" onclick="doRefuse()">Tout refuser</button>
+          <div class="cb-accept-wrap">
+            <span class="cb-nudge">✨ Recommandé</span>
+            <button class="cb-btn cb-accept" onclick="doAccept()">Tout accepter →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS MODAL ── -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal">
+        <div class="modal-hd">
+          <span class="modal-hd-title">⚙️ Paramétrer mes cookies</span>
+          <button class="modal-close" onclick="closeSettings()">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- Essentiels — toujours actifs -->
+          <div class="cat-row">
+            <div class="cat-info">
+              <div class="cat-name">✅ Cookies essentiels</div>
+              <div class="cat-desc">Nécessaires au bon fonctionnement du site (connexion, panier, sécurité). Ils ne peuvent pas être désactivés.</div>
+            </div>
+            <span class="tgl-always">Toujours actif</span>
+          </div>
+          <!-- Mesure d'audience -->
+          <div class="cat-row">
+            <div class="cat-info">
+              <div class="cat-name">📊 Mesure d'audience</div>
+              <div class="cat-desc">Comptent les visites et les pages consultées pour améliorer le site. Les données sont anonymisées.</div>
+            </div>
+            <label class="tgl" title="Activer la mesure d'audience">
+              <input type="checkbox" id="togStats">
+              <span class="tgl-track"><span class="tgl-thumb"></span></span>
+            </label>
+          </div>
+          <!-- Publicité -->
+          <div class="cat-row">
+            <div class="cat-info">
+              <div class="cat-name">📢 Publicité personnalisée</div>
+              <div class="cat-desc">Permettent de vous montrer des publicités adaptées à vos centres d'intérêt sur ce site et sur d'autres sites.</div>
+            </div>
+            <label class="tgl" title="Activer la publicité personnalisée">
+              <input type="checkbox" id="togAds">
+              <span class="tgl-track"><span class="tgl-thumb"></span></span>
+            </label>
+          </div>
+          <!-- Réseaux sociaux -->
+          <div class="cat-row">
+            <div class="cat-info">
+              <div class="cat-name">👍 Réseaux sociaux</div>
+              <div class="cat-desc">Permettent de partager des articles sur Facebook, Twitter, etc. Ces plateformes peuvent vous identifier.</div>
+            </div>
+            <label class="tgl" title="Activer les réseaux sociaux">
+              <input type="checkbox" id="togSocial">
+              <span class="tgl-track"><span class="tgl-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-ft">
+          <button class="mf-refuse" onclick="doRefuseFromSettings()">Tout refuser</button>
+          <button class="mf-save"   onclick="doSaveCustom()">Enregistrer mes choix →</button>
+        </div>
+      </div>
+    </div><!-- /settings modal -->
+
+    <!-- ── RESULT OVERLAY ── -->
+    <div class="result-overlay" id="resultOverlay">
+      <div class="result-card" id="resultCard"></div>
+    </div>
+
+  </div><!-- /site-wrap -->
+
+  <!-- ── INSTRUCTION BAR ── -->
+  <div class="instr">
+    <span class="instr-icon">🍪</span>
+    <span class="instr-text" id="instrText">Une fenêtre demande votre accord sur les cookies. Essayez les <strong>3 boutons</strong> pour comprendre la différence.</span>
+    <div class="path-track">
+      <span class="pt pending" id="pt-accept">✓ Accepter</span>
+      <span class="pt pending" id="pt-refuse">✗ Refuser</span>
+      <span class="pt pending" id="pt-custom">⚙ Paramétrer</span>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+/* ═════════════════════════════════════════════════
+   STATE
+═════════════════════════════════════════════════ */
+const tried = new Set();
+
+/* ═════════════════════════════════════════════════
+   HELPERS
+═════════════════════════════════════════════════ */
+function hideBanner()   { document.getElementById('cookieOverlay').style.display = 'none'; }
+function showBanner()   { document.getElementById('cookieOverlay').style.display = ''; }
+function dimSite(v)     { document.getElementById('fakeSite').classList.toggle('dimmed', v); }
+
+function showResult(cfg) {
+  const catsHTML = cfg.cats.map(c =>
+    `<span class="rcat ${c.on ? 'on' : 'off'}">${c.on ? '✓' : '✗'} ${c.name}</span>`
+  ).join('');
+
+  document.getElementById('resultCard').innerHTML = `
+    <div class="rc-header">
+      <span class="rc-icon">${cfg.icon}</span>
+      <span class="rc-title">${cfg.title}</span>
+    </div>
+    <div class="rc-cats">${catsHTML}</div>
+    <div class="rc-msg ${cfg.msgType}">${cfg.msg}</div>
+    <div class="rc-footer">
+      <span class="rc-tip">${cfg.tip}</span>
+      <button class="rc-retry" onclick="retry()">↩ Essayer une autre option</button>
+    </div>
+  `;
+  document.getElementById('resultOverlay').classList.add('show');
+  dimSite(true);
+}
+
+function markTried(path) {
+  tried.add(path);
+  document.getElementById('pt-' + path).className = 'pt done';
+  if (tried.size === 3) {
+    document.getElementById('instrText').innerHTML =
+      '🎉 <strong>Bravo !</strong> Vous avez testé les 3 options. Retenez : vous pouvez toujours <strong>tout refuser</strong> ou <strong>paramétrer</strong> — c\'est votre droit.';
+  }
+}
+
+/* ═════════════════════════════════════════════════
+   PATH A — Tout accepter
+═════════════════════════════════════════════════ */
+function doAccept() {
+  hideBanner();
+  markTried('accept');
+  showResult({
+    icon: '⚠️',
+    title: 'Vous avez tout accepté',
+    cats: [
+      { name: 'Cookies essentiels',       on: true  },
+      { name: 'Mesure d\'audience',       on: true  },
+      { name: 'Publicité personnalisée',  on: true  },
+      { name: 'Réseaux sociaux',          on: true  },
+    ],
+    msg: '⚠️ Vous avez autorisé la <strong>publicité ciblée</strong> et le <strong>suivi de navigation</strong>. Des annonceurs peuvent vous suivre sur d\'autres sites.',
+    msgType: 'warn',
+    tip: 'Astuce : le bouton "Tout accepter" est souvent le plus visible — c\'est une technique délibérée. Ce n\'est pas l\'option la plus protectrice.',
+  });
+}
+
+/* ═════════════════════════════════════════════════
+   PATH B — Tout refuser
+═════════════════════════════════════════════════ */
+function doRefuse() {
+  hideBanner();
+  markTried('refuse');
+  showResult({
+    icon: '✅',
+    title: 'Vous avez tout refusé',
+    cats: [
+      { name: 'Cookies essentiels',       on: true  },
+      { name: 'Mesure d\'audience',       on: false },
+      { name: 'Publicité personnalisée',  on: false },
+      { name: 'Réseaux sociaux',          on: false },
+    ],
+    msg: '✓ <strong>Votre navigation reste privée.</strong> Le site fonctionne normalement. Vous verrez des publicités, mais non ciblées sur votre profil.',
+    msgType: 'ok',
+    tip: 'C\'est votre droit depuis le RGPD (2018). Les sites doivent accepter votre refus aussi facilement que votre accord.',
+  });
+}
+
+/* ═════════════════════════════════════════════════
+   PATH C — Paramétrer
+═════════════════════════════════════════════════ */
+function openSettings() {
+  hideBanner();
+  document.getElementById('togStats').checked  = false;
+  document.getElementById('togAds').checked    = false;
+  document.getElementById('togSocial').checked = false;
+  document.getElementById('settingsModal').classList.add('show');
+  dimSite(true);
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('show');
+  showBanner();
+  dimSite(false);
+}
+
+function doRefuseFromSettings() {
+  document.getElementById('settingsModal').classList.remove('show');
+  markTried('custom');
+  showResult({
+    icon: '✅',
+    title: 'Tout refusé depuis les paramètres',
+    cats: [
+      { name: 'Cookies essentiels',       on: true  },
+      { name: 'Mesure d\'audience',       on: false },
+      { name: 'Publicité personnalisée',  on: false },
+      { name: 'Réseaux sociaux',          on: false },
+    ],
+    msg: '✓ <strong>Votre navigation reste privée.</strong> Le site fonctionne normalement.',
+    msgType: 'ok',
+    tip: 'Le panneau "Paramétrer" vous donne un contrôle précis, catégorie par catégorie.',
+  });
+}
+
+function doSaveCustom() {
+  const stats  = document.getElementById('togStats').checked;
+  const ads    = document.getElementById('togAds').checked;
+  const social = document.getElementById('togSocial').checked;
+  document.getElementById('settingsModal').classList.remove('show');
+  markTried('custom');
+
+  const anyActive = stats || ads || social;
+  showResult({
+    icon: anyActive ? '⚙️' : '✅',
+    title: 'Vos préférences ont été enregistrées',
+    cats: [
+      { name: 'Cookies essentiels',       on: true   },
+      { name: 'Mesure d\'audience',       on: stats  },
+      { name: 'Publicité personnalisée',  on: ads    },
+      { name: 'Réseaux sociaux',          on: social },
+    ],
+    msg: ads
+      ? '⚠️ La <strong>publicité personnalisée</strong> est activée. Vous pouvez revenir dans les paramètres pour la désactiver à tout moment.'
+      : '✓ Bonne configuration ! La publicité ciblée est désactivée. Vous gardez le contrôle.',
+    msgType: ads ? 'warn' : 'ok',
+    tip: '💡 Le panneau "Paramétrer" est l\'option la plus utile : elle vous laisse choisir précisément ce que vous acceptez.',
+  });
+}
+
+/* ═════════════════════════════════════════════════
+   RETRY
+═════════════════════════════════════════════════ */
+function retry() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  dimSite(false);
+  showBanner();
+}
+</script>
+</body>
+</html>

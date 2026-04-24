@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Détectez les arnaques</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --border: #dde3ec;
+  --text: #1a2840;
+  --text-muted: #7b8ba4;
+  --accent: #60b2c8;
+  --accent-dark: #061d33;
+  --danger: #e05252;
+  --success: #3dba7a;
+  --warning: #f59e0b;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--surface);
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── WIN HEADER ── */
+.win-header {
+  background: var(--accent-dark);
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.win-left { display: flex; align-items: center; gap: 10px; }
+.win-dots { display: flex; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; opacity: 0.55; }
+.dot-r { background: #ff6b6b; }
+.dot-y { background: #ffd166; }
+.dot-g { background: #3dba7a; }
+.win-title { font-size: 0.85rem; font-weight: 600; color: #fff; letter-spacing: 0.01em; }
+
+/* ── PROGRESS DOTS ── */
+.progress-dots { display: flex; gap: 7px; align-items: center; }
+.pdot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.22);
+  transition: all 0.3s ease;
+}
+.pdot.active { background: var(--accent); transform: scale(1.4); }
+.pdot.done-ok { background: var(--success); transform: scale(1); }
+.pdot.done-ko { background: var(--danger); transform: scale(1); }
+
+/* ── QUIZ BODY ── */
+.quiz-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 11px 13px;
+  gap: 9px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── EMAIL CARD ── */
+.email-card {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: border-color 0.3s;
+}
+.email-card.revealed-suspect { border-color: rgba(224,82,82,0.45); }
+.email-card.revealed-safe    { border-color: rgba(61,186,122,0.45); }
+
+.email-meta {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 9px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: #fafbfc;
+}
+.meta-row { display: flex; gap: 8px; align-items: baseline; }
+.meta-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 34px;
+  flex-shrink: 0;
+}
+.meta-value { font-size: 0.78rem; color: var(--text); flex: 1; line-height: 1.3; word-break: break-all; }
+.meta-value.subject { font-weight: 700; font-size: 0.82rem; }
+
+/* ── EMAIL BODY ── */
+.email-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 11px 13px;
+  font-size: 0.78rem;
+  line-height: 1.68;
+  color: var(--text);
+}
+.email-body p { margin-bottom: 7px; }
+.email-body p:last-child { margin-bottom: 0; }
+
+/* ── CLUE SPANS ── */
+.clue { border-radius: 3px; transition: background 0.4s ease, outline-color 0.4s ease; outline: 1.5px solid transparent; }
+.clue.revealed-bad { background: rgba(224,82,82,0.13); outline-color: rgba(224,82,82,0.5); padding: 0 2px; }
+.clue.revealed-ok  { background: rgba(61,186,122,0.12); outline-color: rgba(61,186,122,0.5); padding: 0 2px; }
+
+/* ── FAKE EMAIL BUTTON ── */
+.email-cta {
+  display: inline-block;
+  padding: 7px 15px;
+  background: #1558d6;
+  color: #fff;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.76rem;
+  cursor: default;
+  user-select: none;
+  margin: 3px 0;
+}
+.email-cta.revealed-bad { background: #1558d6 !important; outline: 2px solid rgba(224,82,82,0.7) !important; }
+
+.fake-url {
+  font-size: 0.69rem;
+  color: #1558d6;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* ── VERDICT PANEL ── */
+.verdict-panel {
+  flex-shrink: 0;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  animation: slideUp 0.28s cubic-bezier(.22,.8,.2,1) both;
+}
+.verdict-panel.show { display: flex; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.verdict-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.verdict-header.v-ok { background: rgba(61,186,122,0.11); color: #1a6e44; border: 1.5px solid rgba(61,186,122,0.32); }
+.verdict-header.v-ko { background: rgba(224,82,82,0.09); color: #b03030; border: 1.5px solid rgba(224,82,82,0.26); }
+
+.clues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 84px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+/* scroll custom */
+.clues-list::-webkit-scrollbar { width: 3px; }
+.clues-list::-webkit-scrollbar-track { background: transparent; }
+.clues-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.clue-item { display: flex; gap: 7px; align-items: flex-start; font-size: 0.72rem; line-height: 1.45; }
+.ci-badge {
+  min-width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.58rem; font-weight: 700; color: white;
+  flex-shrink: 0; margin-top: 1px;
+}
+.ci-badge.bad { background: var(--danger); }
+.ci-badge.ok  { background: var(--success); }
+.ci-text { color: var(--text); }
+.ci-text .lbl-bad { color: #b03030; font-weight: 700; }
+.ci-text .lbl-ok  { color: #1a6e44; font-weight: 700; }
+
+/* ── BOTTOM BAR ── */
+.bottom-bar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 9px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 8px;
+  font-size: 0.79rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  line-height: 1.2;
+}
+.btn-safe {
+  background: rgba(61,186,122,0.09);
+  color: #1a6e44;
+  border-color: rgba(61,186,122,0.3);
+}
+.btn-safe:hover { background: rgba(61,186,122,0.17); }
+.btn-safe:active { transform: scale(0.98); }
+
+.btn-suspect {
+  background: rgba(224,82,82,0.08);
+  color: #b03030;
+  border-color: rgba(224,82,82,0.24);
+}
+.btn-suspect:hover { background: rgba(224,82,82,0.16); }
+.btn-suspect:active { transform: scale(0.98); }
+
+.btn-next {
+  background: var(--accent-dark);
+  color: white;
+  border-color: transparent;
+  flex: 0 0 auto;
+  padding: 10px 18px;
+}
+.btn-next:hover { background: #0e3250; }
+.btn-next:active { transform: scale(0.98); }
+
+/* ── SCORE SCREEN ── */
+.score-screen {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  text-align: center;
+  overflow: hidden;
+}
+.score-screen.show { display: flex; }
+
+.score-circle {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-weight: 900;
+  border: 3px solid;
+  animation: popIn 0.45s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popIn {
+  from { transform: scale(0.3); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.score-num { font-size: 1.7rem; line-height: 1; }
+.score-of  { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.65; margin-top: 2px; }
+
+.score-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.score-msg   { font-size: 0.75rem; color: var(--text-muted); max-width: 285px; line-height: 1.55; }
+
+.score-row { display: flex; gap: 6px; align-items: center; }
+.sd { width: 10px; height: 10px; border-radius: 50%; }
+
+.btn-restart {
+  background: var(--accent-dark);
+  color: white;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+.btn-restart:hover { background: #0e3250; }
+</style>
+</head>
+<body>
+
+<div class="win-header">
+  <div class="win-left">
+    <div class="win-dots">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+    </div>
+    <span class="win-title">🎣 Vrai mail ou arnaque ?</span>
+  </div>
+  <div class="progress-dots" id="progressDots"></div>
+</div>
+
+<div class="quiz-body" id="quizBody">
+  <div class="email-card" id="emailCard">
+    <div class="email-meta" id="emailMeta"></div>
+    <div class="email-body"  id="emailBody"></div>
+  </div>
+  <div class="verdict-panel" id="verdictPanel"></div>
+  <div class="bottom-bar"   id="bottomBar"></div>
+</div>
+
+<div class="score-screen" id="scoreScreen"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   DONNÉES — 5 e-mails (3 arnaques + 2 vrais)
+═══════════════════════════════════════════════════════ */
+const EMAILS = [
+
+  /* ── 1 ── Phishing BNP Paribas (SUSPECT) ── */
+  {
+    isSuspect: true,
+    fromName : 'Sécurité BNP Paribas',
+    fromHTML : '<span class="clue" data-bad>alertes@bnp-paribas-securite.net</span>',
+    subject  : '⚠️ Votre compte a été temporairement bloqué',
+    bodyHTML : `
+<p>Madame, Monsieur,</p>
+<p>Suite à une tentative de connexion inhabituelle, nous avons bloqué l'accès à votre espace client.</p>
+<p>Pour éviter la suspension définitive de votre compte, confirmez votre identité <span class="clue" data-bad><strong>dans les 24 heures</strong></span>.</p>
+<p style="margin:10px 0 3px;"><span class="email-cta">Vérifier mon identité →</span></p>
+<p class="fake-url clue" data-bad>https://bnp-paribas-verif-compte.net/securite/login</p>
+<p style="margin-top:9px;color:#aab;font-size:0.69rem;">L'équipe BNP Paribas — Ne répondez pas à ce message automatique.</p>`,
+    clues: [
+      { bad: true, text: '<span class="lbl-bad">Expéditeur faux</span> : @bnp-paribas-securite<strong>.net</strong> n\'est pas BNP Paribas (officiel : @bnpparibas.com).' },
+      { bad: true, text: '<span class="lbl-bad">Urgence artificielle</span> : "dans les 24 heures" pousse à agir sans réfléchir — technique classique.' },
+      { bad: true, text: '<span class="lbl-bad">Lien piégé</span> : "bnp-paribas-verif-compte.net" est un faux site qui vole vos identifiants.' },
+    ],
+    verdictOK: '✓ Bien repéré ! C\'est une tentative de phishing bancaire. Les indices sont surlignés en rouge.',
+    verdictKO: '✗ C\'est pourtant une arnaque ! Regardez les éléments en rouge dans le mail.',
+  },
+
+  /* ── 2 ── Ameli légitime (SÛR) ── */
+  {
+    isSuspect: false,
+    fromName : 'L\'Assurance Maladie',
+    fromHTML : '<span class="clue" data-ok>contact@ameli.fr</span>',
+    subject  : 'Votre attestation de droits est disponible',
+    bodyHTML : `
+<p>Bonjour,</p>
+<p>Votre attestation de droits à l'Assurance Maladie est disponible dans votre espace personnel.</p>
+<p>Ce document peut vous être demandé pour justifier de votre couverture auprès d'un organisme.</p>
+<p><span class="clue" data-ok>Pour la consulter, rendez-vous sur votre espace <strong>ameli.fr</strong></span></p>
+<p><span class="clue" data-ok>Aucune information supplémentaire ne vous est demandée.</span></p>
+<p style="margin-top:9px;color:#aab;font-size:0.69rem;">L'Assurance Maladie — Message automatique, ne pas répondre.</p>`,
+    clues: [
+      { bad: false, text: '<span class="lbl-ok">Expéditeur officiel</span> : @ameli.fr est bien le domaine de l\'Assurance Maladie.' },
+      { bad: false, text: '<span class="lbl-ok">Lien clair</span> : Le mail indique simplement d\'aller sur ameli.fr, sans bouton suspect.' },
+      { bad: false, text: '<span class="lbl-ok">Aucune demande</span> : Pas de mot de passe ni de coordonnées bancaires demandées.' },
+    ],
+    verdictOK: '✓ Exact ! Ce mail est authentique : domaine officiel, aucune urgence, aucune demande suspecte.',
+    verdictKO: '✗ Ce mail est pourtant sûr ! Regardez les éléments verts qui confirment son authenticité.',
+  },
+
+  /* ── 3 ── Phishing colis La Poste (SUSPECT) ── */
+  {
+    isSuspect: true,
+    fromName : 'La Poste – Service Livraison',
+    fromHTML : '<span class="clue" data-bad>livraison@laposte-colis-service.info</span>',
+    subject  : 'Votre colis est en attente – Frais impayés',
+    bodyHTML : `
+<p>Madame, Monsieur,</p>
+<p>Votre colis <strong>#FR84920183</strong> est retenu à notre centre de tri. Des <span class="clue" data-bad>frais d'expédition de <strong>2,99 €</strong> sont à régler avant livraison</span>.</p>
+<p><span class="clue" data-bad>Sans règlement sous 48h, le colis sera retourné à l'expéditeur.</span></p>
+<p style="margin:10px 0 3px;"><span class="email-cta">Régler les frais →</span></p>
+<p class="fake-url clue" data-bad>https://laposte-livraison-express.info/payer</p>`,
+    clues: [
+      { bad: true, text: '<span class="lbl-bad">Domaine faux</span> : La Poste utilise @laposte.fr — jamais @laposte-colis-service<strong>.info</strong>.' },
+      { bad: true, text: '<span class="lbl-bad">Demande de paiement</span> : La Poste ne demande jamais de régler des frais par e-mail.' },
+      { bad: true, text: '<span class="lbl-bad">Menace de délai</span> : "48h sinon retour" — pression pour empêcher toute réflexion.' },
+      { bad: true, text: '<span class="lbl-bad">Lien piégé</span> : "laposte-livraison-express.info" est un faux site pour voler vos données bancaires.' },
+    ],
+    verdictOK: '✓ Bonne analyse ! L\'arnaque au faux colis est très répandue. En cas de doute, allez directement sur laposte.fr.',
+    verdictKO: '✗ C\'est une arnaque ! Les faux colis trompent beaucoup de monde. Les indices sont en rouge.',
+  },
+
+  /* ── 4 ── Phishing remboursement impôts (SUSPECT) ── */
+  {
+    isSuspect: true,
+    fromName : 'Direction Générale des Finances Publiques',
+    fromHTML : '<span class="clue" data-bad>remboursement@dgfip-impots.fr</span>',
+    subject  : 'Remboursement fiscal de 348,00 € – Action requise',
+    bodyHTML : `
+<p>Madame, Monsieur,</p>
+<p>Suite au traitement de votre déclaration, <span class="clue" data-bad>un remboursement de <strong>348,00 €</strong> vous est dû</span>.</p>
+<p><span class="clue" data-bad>Pour percevoir ce virement, renseignez vos coordonnées bancaires dans les 7 jours.</span></p>
+<p style="margin:10px 0 3px;"><span class="email-cta">Réclamer mon remboursement →</span></p>
+<p class="fake-url clue" data-bad>https://impots-remboursement-fiscal.fr/reclamer</p>
+<p style="margin-top:9px;color:#aab;font-size:0.69rem;">Direction Générale des Finances Publiques</p>`,
+    clues: [
+      { bad: true, text: '<span class="lbl-bad">Domaine incorrect</span> : Le vrai site des impôts est impots.gouv.fr — pas "dgfip-impots.fr".' },
+      { bad: true, text: '<span class="lbl-bad">Promesse d\'argent</span> : Une somme précise pour capter l\'attention — technique très utilisée.' },
+      { bad: true, text: '<span class="lbl-bad">Demande de RIB</span> : Les impôts ont déjà votre RIB et ne le demandent jamais par e-mail.' },
+      { bad: true, text: '<span class="lbl-bad">Lien faux</span> : "impots-remboursement-fiscal.fr" imite les impôts pour voler vos données.' },
+    ],
+    verdictOK: '✓ Parfait ! Les faux remboursements fiscaux sont très courants. Les vrais remboursements sont automatiques.',
+    verdictKO: '✗ C\'est une arnaque ! Les impôts n\'envoient jamais ce type de demande par e-mail. Indices en rouge.',
+  },
+
+  /* ── 5 ── Confirmation Fnac légitime (SÛR) ── */
+  {
+    isSuspect: false,
+    fromName : 'La Fnac',
+    fromHTML : '<span class="clue" data-ok>no-reply@fnac.com</span>',
+    subject  : 'Confirmation de votre commande #89234817',
+    bodyHTML : `
+<p>Bonjour,</p>
+<p><span class="clue" data-ok>Votre commande <strong>#89234817</strong> a bien été enregistrée</span> et est en cours de préparation.</p>
+<p><strong>Récapitulatif :</strong><br>
+• Casque Bluetooth Sony WH-1000XM5 — 279,99 €<br>
+• Livraison standard gratuite</p>
+<p>Vous recevrez un e-mail dès l'expédition avec votre numéro de suivi.</p>
+<p><span class="clue" data-ok>Aucune action n'est requise de votre part.</span></p>
+<p style="margin-top:9px;color:#aab;font-size:0.69rem;">La Fnac — fnac.com — Ne répondez pas à ce message.</p>`,
+    clues: [
+      { bad: false, text: '<span class="lbl-ok">Expéditeur vérifié</span> : @fnac.com est bien le domaine officiel de la Fnac.' },
+      { bad: false, text: '<span class="lbl-ok">Numéro de commande</span> : Un vrai mail de confirmation précise toujours un numéro de commande.' },
+      { bad: false, text: '<span class="lbl-ok">Aucune action demandée</span> : Le mail informe seulement — aucun lien pour "confirmer", aucun paiement.' },
+    ],
+    verdictOK: '✓ Correct ! Ce mail est authentique : domaine officiel, numéro de commande, aucune demande suspecte.',
+    verdictKO: '✗ Ce mail est en réalité sûr ! Regardez les éléments verts qui montrent pourquoi on peut lui faire confiance.',
+  },
+];
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let current  = 0;
+let score    = 0;
+let results  = [];
+let answered = false;
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+function init() {
+  buildDots();
+  loadEmail(0);
+}
+
+/* ── PROGRESS DOTS ── */
+function buildDots() {
+  document.getElementById('progressDots').innerHTML =
+    EMAILS.map((_, i) =>
+      `<div class="pdot ${i === 0 ? 'active' : ''}" id="pd${i}"></div>`
+    ).join('');
+}
+
+function setDot(i, state) {
+  const d = document.getElementById('pd' + i);
+  if (d) d.className = 'pdot ' + state;
+}
+
+/* ─────────────────────────────────────────────────────
+   LOAD EMAIL
+───────────────────────────────────────────────────── */
+function loadEmail(idx) {
+  answered = false;
+  const e = EMAILS[idx];
+
+  /* reset card border */
+  const card = document.getElementById('emailCard');
+  card.className = 'email-card';
+
+  /* meta */
+  document.getElementById('emailMeta').innerHTML = `
+    <div class="meta-row">
+      <span class="meta-label">De</span>
+      <span class="meta-value">${e.fromName}&nbsp;&lt;${e.fromHTML}&gt;</span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-label">Objet</span>
+      <span class="meta-value subject">${e.subject}</span>
+    </div>`;
+
+  /* body */
+  document.getElementById('emailBody').innerHTML = e.bodyHTML;
+
+  /* reset verdict */
+  const vp = document.getElementById('verdictPanel');
+  vp.className = 'verdict-panel';
+  vp.innerHTML = '';
+
+  /* bottom bar — choice buttons */
+  document.getElementById('bottomBar').innerHTML = `
+    <button class="btn btn-safe"    onclick="answer(false)">✅ Ce mail est sûr</button>
+    <button class="btn btn-suspect" onclick="answer(true)">🚨 C'est une arnaque</button>`;
+}
+
+/* ─────────────────────────────────────────────────────
+   ANSWER
+───────────────────────────────────────────────────── */
+function answer(userSaidSuspect) {
+  if (answered) return;
+  answered = true;
+
+  const e   = EMAILS[current];
+  const ok  = (userSaidSuspect === e.isSuspect);
+  if (ok) score++;
+  results.push(ok);
+
+  /* dot */
+  setDot(current, ok ? 'done-ok' : 'done-ko');
+
+  /* reveal clue spans */
+  const revClass = e.isSuspect ? 'revealed-bad' : 'revealed-ok';
+  document.querySelectorAll('#emailMeta .clue, #emailBody .clue').forEach(el => {
+    el.classList.add(revClass);
+  });
+
+  /* card border */
+  document.getElementById('emailCard').classList.add(
+    e.isSuspect ? 'revealed-suspect' : 'revealed-safe'
+  );
+
+  /* verdict panel */
+  const vp = document.getElementById('verdictPanel');
+  const hClass = ok ? 'v-ok' : 'v-ko';
+  const hText  = ok ? e.verdictOK : e.verdictKO;
+
+  const cluesHTML = e.clues.map((c, i) => `
+    <div class="clue-item">
+      <div class="ci-badge ${c.bad ? 'bad' : 'ok'}">${i + 1}</div>
+      <div class="ci-text">${c.text}</div>
+    </div>`).join('');
+
+  vp.innerHTML = `
+    <div class="verdict-header ${hClass}">${hText}</div>
+    <div class="clues-list">${cluesHTML}</div>`;
+  vp.classList.add('show');
+
+  /* bottom bar — next / score */
+  const isLast = current === EMAILS.length - 1;
+  document.getElementById('bottomBar').innerHTML = isLast
+    ? `<button class="btn btn-next" onclick="showScore()">Voir mon résultat →</button>`
+    : `<button class="btn btn-next" onclick="nextEmail()">E-mail suivant →</button>`;
+}
+
+/* ─────────────────────────────────────────────────────
+   NEXT EMAIL
+───────────────────────────────────────────────────── */
+function nextEmail() {
+  current++;
+  setDot(current, 'active');
+  loadEmail(current);
+}
+
+/* ─────────────────────────────────────────────────────
+   SCORE SCREEN
+───────────────────────────────────────────────────── */
+function showScore() {
+  document.getElementById('quizBody').style.display = 'none';
+  const screen = document.getElementById('scoreScreen');
+
+  const total = EMAILS.length;
+  let circleStyle, title, msg;
+
+  if (score === total) {
+    circleStyle = `background:rgba(61,186,122,0.12);color:#1a6e44;border-color:var(--success)`;
+    title = 'Excellent ! Aucune arnaque ne vous a eu !';
+    msg   = 'Vous avez identifié tous les mails. Partagez ces réflexes avec vos proches.';
+  } else if (score >= total - 1) {
+    circleStyle = `background:rgba(96,178,200,0.12);color:#145f75;border-color:var(--accent)`;
+    title = 'Très bien !';
+    msg   = 'Vous avez presque tout repéré. Relisez les indices des mails manqués.';
+  } else if (score >= Math.ceil(total / 2)) {
+    circleStyle = `background:rgba(245,158,11,0.11);color:#92400e;border-color:var(--warning)`;
+    title = 'Pas mal, restez vigilant';
+    msg   = 'Certaines arnaques sont trompeuses. Vérifiez toujours l\'expéditeur et les liens.';
+  } else {
+    circleStyle = `background:rgba(224,82,82,0.09);color:#b03030;border-color:var(--danger)`;
+    title = 'Les arnaques sont trompeuses !';
+    msg   = 'Recommencez pour mémoriser les indices clés : expéditeur, urgence, lien suspect.';
+  }
+
+  const dotsHTML = results.map(r =>
+    `<div class="sd" style="background:${r ? 'var(--success)' : 'var(--danger)'}"></div>`
+  ).join('');
+
+  screen.innerHTML = `
+    <div class="score-circle" style="${circleStyle}">
+      <div class="score-num">${score}/${total}</div>
+      <div class="score-of">score</div>
+    </div>
+    <div class="score-title">${title}</div>
+    <div class="score-msg">${msg}</div>
+    <div class="score-row">${dotsHTML}</div>
+    <button class="btn-restart" onclick="restart()">↩ Recommencer</button>`;
+
+  screen.classList.add('show');
+}
+
+/* ─────────────────────────────────────────────────────
+   RESTART
+───────────────────────────────────────────────────── */
+function restart() {
+  current  = 0;
+  score    = 0;
+  results  = [];
+  answered = false;
+  document.getElementById('quizBody').style.display = 'flex';
+  document.getElementById('scoreScreen').classList.remove('show');
+  buildDots();
+  loadEmail(0);
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

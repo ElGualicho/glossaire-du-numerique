@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clavier virtuel</title>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Varela+Round&display=swap" />
+  <style>
+/* ─── VARIABLES ─────────────────────────────────────────────── */
+:root {
+  --keyboard-bg-color: #061d33;
+  --key-bg-color:      #0d2e4e;
+  --key-border-color:  rgba(96, 178, 200, 0.25);
+  --key-color:         #e8f4f8;
+  --key-sub-color:     rgba(96, 178, 200, 0.75);
+  --key-shadow:        rgba(0, 0, 0, 0.5);
+  --key-highlight:     rgba(96, 178, 200, 0.12);
+  --lock-on-color:     #60b2c8;
+  --accent:            #60b2c8;
+  --font-b: 'Inter', 'Varela Round', sans-serif;
+  --font-m: 'Inter', 'Varela Round', sans-serif;
+}
+
+/* ─── BASE ──────────────────────────────────────────────────── */
+* { box-sizing: border-box; outline: none; }
+body {
+  padding: 0; margin: 0;
+  background: transparent;
+  min-height: auto;
+  display: block;
+}
+::selection      { background-color: var(--accent); color: #061d33; }
+::-moz-selection { background-color: var(--accent); color: #061d33; }
+
+/* ─── SCROLLBAR ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+@media only screen and (min-width: 1280px) { ::-webkit-scrollbar { height: 0; } }
+::-webkit-scrollbar-track { box-shadow: inset 0 0 8px rgba(0,0,0,0.6); border-radius: 10px; }
+::-webkit-scrollbar-thumb { border-radius: 10px; background: var(--accent); box-shadow: inset 0 0 6px rgba(0,0,0,0.5); }
+::-webkit-scrollbar-thumb:window-inactive { background: rgba(96,178,200,0.5); }
+
+.light-off { background-color: rgba(0,0,0,0.9) !important; }
+
+/* ─── TOUCHE — style principal ──────────────────────────────── */
+.key {
+  background: linear-gradient(160deg, #112840 0%, #0a2236 100%);
+  color: var(--key-color);
+  font-family: var(--font-m);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  width: 46px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 0 4px;
+  padding: 0 2px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(96, 178, 200, 0.3);
+  border-bottom-color: rgba(96, 178, 200, 0.15);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.55), inset 0 1px 0 rgba(96,178,200,0.18);
+  transition: all 0.1s ease-in-out;
+  user-select: none;
+}
+.key span {
+  font-size: 9px; color: var(--key-sub-color);
+  font-weight: 700; line-height: 1; margin-top: 2px; letter-spacing: 0.03em;
+}
+.key:hover, .key-press {
+  cursor: pointer; background: #ffffff; border-color: #ffffff;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+  transform: translateY(2px); color: #061d33;
+}
+.key:hover span, .key-press span { color: #061d33; }
+
+.key.shift:hover, .key.shift.key-press,
+kbd[data-key="17"]:hover, kbd[data-key="17"].key-press,
+kbd[data-key="18"]:hover, kbd[data-key="18"].key-press,
+kbd[data-key="91"]:hover, kbd[data-key="91"].key-press,
+kbd[data-key="-2"]:hover, kbd[data-key="-2"].key-press,
+kbd[data-key="9"]:hover,  kbd[data-key="9"].key-press,
+kbd[data-key="8"]:hover,  kbd[data-key="8"].key-press,
+kbd[data-key="13"]:hover, kbd[data-key="13"].key-press,
+kbd[data-key="27"]:hover, kbd[data-key="27"].key-press,
+kbd[data-key="32"]:hover, kbd[data-key="32"].key-press {
+  background: #ffffff !important; border-color: #ffffff !important;
+  color: #061d33 !important; box-shadow: 0 2px 0 rgba(0,0,0,0.4) !important;
+}
+.key-empty { background: transparent !important; border: none !important; box-shadow: none !important; }
+
+/* ─── ICÔNES ────────────────────────────────────────────────── */
+.key i { margin-top: 1px; }
+.key .fas { font-size: 11px; }
+.key.large { padding-top: 5px; font-size: 18px; }
+.key.large i { font-size: 18px; margin-top: 0; }
+i.underscore { margin-top: -8px; }
+
+/* ─── TOUCHES SPÉCIALES ─────────────────────────────────────── */
+.backspace, .tab { width: 80px; }
+.enter { width: 100px; }
+.spacebar { width: 405px; font-size: 14px; font-weight: 700; letter-spacing: 2px; color: rgba(255,255,255,0.6); }
+.shift { display: flex; flex-flow: row nowrap; }
+.l-s { width: 60px; }
+.r-s { width: 120px; }
+.c-menu i { border: 1px solid rgba(96,178,200,0.5); padding: 3px; border-radius: 3px; }
+.num-special { justify-content: flex-start; padding-top: 5px; }
+.num-ins { width: 100px; }
+.num-large { margin-bottom: -58px; height: 100px; }
+
+/* ─── ENTRÉE ISO ──────────────────────────────────────────────── */
+.iso-enter-ghost { width: 46px; }
+.enter-iso {
+  width: 46px; height: 96px; margin-top: -56px;
+  align-self: flex-end; position: relative; z-index: 2;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #0f3352 0%, #082135 100%);
+  border-color: rgba(96,178,200,0.5); color: var(--accent);
+}
+
+/* ─── TOUCHES MODIFICATRICES ────────────────────────────────── */
+.key.shift, kbd[data-key="17"], kbd[data-key="18"], kbd[data-key="91"], kbd[data-key="-2"] {
+  background: linear-gradient(160deg, #0f2d47 0%, #091e30 100%);
+  border-color: rgba(96,178,200,0.45); color: var(--accent); font-weight: 700; font-size: 11px;
+}
+kbd[data-key="13"], kbd[data-key="8"], kbd[data-key="9"] {
+  background: linear-gradient(160deg, #0f3352 0%, #082135 100%);
+  border-color: rgba(96,178,200,0.5); color: var(--accent);
+}
+kbd[data-key="27"] { border-color: rgba(200,80,80,0.5); color: rgba(220,130,130,0.9); }
+kbd[data-key="27"]:hover {
+  border-color: rgba(220,80,80,0.85); color: #e88;
+  background: linear-gradient(160deg, #2e1515 0%, #1e0d0d 100%);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 0 10px rgba(200,80,80,0.2);
+}
+
+/* ─── VERROUS ────────────────────────────────────────────────── */
+.locks { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0; padding-left: 0; margin-left: -1px; }
+.lock { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 54px; }
+.light-key {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  background: none !important; border: none !important; box-shadow: none !important;
+  padding: 0; width: auto; height: auto; border-radius: 0; cursor: default;
+}
+.light-key .fas { font-size: 16px; }
+.lock-label { font-size: 9px; font-weight: 700; letter-spacing: 0.05em; font-family: var(--font-m); }
+.off .fas, .off .lock-label { color: rgba(255,255,255,0.45); }
+.on  .fas, .on  .lock-label { color: rgba(255,255,255,0.9); }
+
+/* ─── LAYOUT CLAVIER ─────────────────────────────────────────── */
+.keyboard-container {
+  width: 100%; overflow: hidden; padding: 10px 0;
+  background: transparent; display: flex; justify-content: center;
+  user-select: none; cursor: default;
+}
+.keyboard {
+  background: transparent; width: 1250px; flex-shrink: 0; padding: 10px 0;
+  border-radius: 0; display: grid; grid-template-columns: 1fr;
+  grid-template-rows: 1fr; justify-content: center; box-shadow: none;
+}
+.row {
+  display: grid; grid-template-columns: auto 170px 220px;
+  grid-gap: 25px; padding: 5px; margin-top: 5px;
+}
+.group, .mini-group { display: flex; flex-flow: row nowrap; justify-content: flex-start; align-items: center; }
+.mini-group { margin-left: 28px; }
+.right { display: flex; justify-content: flex-start; }
+
+/* ─── TOOLTIP ─────────────────────────────────────────────────── */
+.key-tooltip {
+  position: fixed; z-index: 9999; pointer-events: none;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  background: #061d33; border: 1.5px solid #60b2c8;
+  border-radius: 12px; padding: 10px 14px; max-width: 240px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+  font-family: 'Varela Round', sans-serif;
+}
+.key-tooltip.visible { opacity: 1; transform: translateY(0); }
+.key-tooltip-title { font-size: 0.82rem; font-weight: 700; color: #60b2c8; margin-bottom: 5px; white-space: nowrap; }
+.key-tooltip-desc  { font-size: 0.78rem; line-height: 1.45; color: rgba(255,255,255,0.88); }
+.key-tooltip-tip   { margin-top: 6px; font-size: 0.7rem; color: rgba(255,255,255,0.45); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; }
+  </style>
+</head>
+<body>
+  <main style="width:100%; display:flex; align-items:center; justify-content:center; min-height:100vh;">
+    <div class="keyboard-container" style="user-select:none; cursor:default;" onmousedown="event.preventDefault()">
+      <div class="keyboard">
+
+        <!-- 1ère rangée -->
+        <div class="row">
+          <div class="group">
+            <kbd data-key="27" class="key" data-tip-title="Échap (Esc)" data-tip-desc="Annule l'action en cours ou ferme une fenêtre.">Esc</kbd>
+            <div class="mini-group">
+              <kbd data-key="112" class="key" data-tip-title="F1 — Aide" data-tip-desc="Ouvre l'aide du programme actuellement ouvert.">F1<i class="fas fa-home"></i></kbd>
+              <kbd data-key="113" class="key" data-tip-title="F2 — Renommer" data-tip-desc="Renomme un fichier ou un dossier sélectionné.">F2<i class="fas fa-envelope"></i></kbd>
+              <kbd data-key="114" class="key" data-tip-title="F3 — Rechercher" data-tip-desc="Ouvre la barre de recherche dans le programme ou l'explorateur.">F3<i class="fas fa-search"></i></kbd>
+              <kbd data-key="115" class="key" data-tip-title="F4 — Fermer (avec Alt)" data-tip-desc="Seule : accède à la barre d'adresse. Avec Alt : ferme le programme actif (Alt + F4).">F4<i class="fas fa-copy"></i></kbd>
+            </div>
+            <div class="mini-group">
+              <kbd data-key="116" class="key" data-tip-title="F5 — Actualiser" data-tip-desc="Recharge la page Internet affichée dans votre navigateur.">F5<i class="fas fa-play"><i class="fas fa-pause"></i></i></kbd>
+              <kbd data-key="117" class="key" data-tip-title="F6 — Barre d'adresse" data-tip-desc="Déplace le curseur vers la barre d'adresse du navigateur.">F6<i class="fas fa-stop"></i></kbd>
+              <kbd data-key="118" class="key" data-tip-title="F7 — Correction orthographique" data-tip-desc="Active la correction orthographique dans Word ou LibreOffice.">F7<i class="fas fa-fast-backward"></i></kbd>
+              <kbd data-key="119" class="key" data-tip-title="F8 — Sélection étendue" data-tip-desc="Permet d'étendre la sélection de texte avec les touches flèches.">F8<i class="fas fa-fast-forward"></i></kbd>
+            </div>
+            <div class="mini-group">
+              <kbd data-key="120" class="key" data-tip-title="F9" data-tip-desc="Envoie et reçoit les e-mails dans certains logiciels de messagerie.">F9<i class="fas fa-volume-down"></i></kbd>
+              <kbd data-key="121" class="key" data-tip-title="F10 — Menu" data-tip-desc="Ouvre la barre de menus du programme actif.">F10<i class="fas fa-volume-up"></i></kbd>
+              <kbd data-key="122" class="key" data-tip-title="F11 — Plein écran" data-tip-desc="Passe en mode plein écran ou en revient. Très pratique sur Internet !">F11<i class="fas fa-volume-off"></i></kbd>
+              <kbd data-key="123" class="key" data-tip-title="F12 — Enregistrer sous" data-tip-desc="Ouvre la fenêtre « Enregistrer sous » dans Word, Excel…">F12<i class="fas fa-sun"></i></kbd>
+            </div>
+          </div>
+          <div class="right">
+            <div class="group">
+              <kbd data-key="-1" class="key" data-tip-title="Impr. écran" data-tip-desc="Prend une photo de votre écran et la copie. Vous pouvez ensuite la coller (Ctrl+V) dans un document ou un message.">Impr écran</kbd>
+              <kbd data-key="145" class="key" data-tip-title="Arrêt défilement" data-tip-desc="Rarement utilisée aujourd'hui. Bloquait autrefois le défilement dans les tableurs.">Arrêt défil</kbd>
+              <kbd data-key="19" class="key" data-tip-title="Pause / Attn" data-tip-desc="Rarement utilisée. Pouvait mettre en pause des programmes anciens.">Pause Attn</kbd>
+            </div>
+          </div>
+          <div class="locks">
+            <div class="lock" id="nlk"><div class="light-key off" title="Verr. Num"><i class="fas fa-lock"></i><span class="lock-label">9</span></div></div>
+            <div class="lock" id="clk"><div class="light-key off" title="Verr. Maj"><i class="fas fa-lock"></i><span class="lock-label">A</span></div></div>
+            <div class="lock" id="slk"><div class="light-key off" title="Arrêt défil."><i class="fas fa-lock"></i><span class="lock-label">↕</span></div></div>
+          </div>
+        </div>
+
+        <!-- 2ème rangée -->
+        <div class="row">
+          <div class="group">
+            <kbd data-key="192" class="key large" data-tip-title="² (exposant)" data-tip-desc="Saisit le symbole ² (au carré). Utilisé en mathématiques ou dans les adresses (ex. 3² m²).">²</kbd>
+            <kbd data-key="49" class="key" data-tip-title="1 &amp;" data-tip-desc="Saisit le chiffre 1. Avec Shift : le symbole &amp;.">1<span>&amp;</span></kbd>
+            <kbd data-key="50" class="key" data-tip-title="2 é ~" data-tip-desc="Saisit le chiffre 2. Avec Shift : é. Avec Alt Gr : ~ (tilde).">2<span>é ~</span></kbd>
+            <kbd data-key="51" class="key" data-tip-title='3 " #' data-tip-desc='Saisit le chiffre 3. Avec Shift : guillemet ". Avec Alt Gr : # (dièse).'>3<span>" #</span></kbd>
+            <kbd data-key="52" class="key" data-tip-title="4 ' {" data-tip-desc="Saisit le chiffre 4. Avec Shift : apostrophe '. Avec Alt Gr : { (accolade ouvrante).">4<span>' {</span></kbd>
+            <kbd data-key="53" class="key" data-tip-title="5 ( [" data-tip-desc="Saisit le chiffre 5. Avec Shift : parenthèse (. Avec Alt Gr : [ (crochet ouvrant).">5<span>( [</span></kbd>
+            <kbd data-key="54" class="key" data-tip-title="6 - |" data-tip-desc="Saisit le chiffre 6. Avec Shift : tiret -. Avec Alt Gr : | (barre verticale).">6<span>- |</span></kbd>
+            <kbd data-key="55" class="key" data-tip-title="7 è `" data-tip-desc="Saisit le chiffre 7. Avec Shift : è. Avec Alt Gr : ` (accent grave).">7<span>è `</span></kbd>
+            <kbd data-key="56" class="key" data-tip-title="8 _ \" data-tip-desc="Saisit le chiffre 8. Avec Shift : tiret bas _. Avec Alt Gr : \ (antislash).">8<span>_ \</span></kbd>
+            <kbd data-key="57" class="key" data-tip-title="9 ç ^" data-tip-desc="Saisit le chiffre 9. Avec Shift : ç. Avec Alt Gr : ^ (chapeau).">9<span>ç ^</span></kbd>
+            <kbd data-key="48" class="key" data-tip-title="0 à @" data-tip-desc="Saisit le chiffre 0. Avec Shift : à. Avec Alt Gr : @ (arobase, indispensable pour les adresses e-mail !).">0<span>à @</span></kbd>
+            <kbd data-key="189" class="key" data-tip-title="° ) ]" data-tip-desc="Saisit °. Avec Shift : parenthèse fermante ). Avec Alt Gr : ] (crochet fermant).">°<span>) ]</span></kbd>
+            <kbd data-key="187" class="key" data-tip-title="+ = }" data-tip-desc="Saisit +. Avec Shift : =. Avec Alt Gr : } (accolade fermante).">+<span>= }</span></kbd>
+            <kbd data-key="8" class="key backspace" data-tip-title="Retour arrière ←" data-tip-desc="Efface le caractère situé à gauche du curseur. Maintenez enfoncée pour effacer rapidement.">←</kbd>
+          </div>
+          <div class="group">
+            <kbd data-key="45" class="key" data-tip-title="Inser (Insertion)" data-tip-desc="Bascule entre le mode insertion (le texte s'insère) et le mode remplacement (le texte écrasé est remplacé).">Insert</kbd>
+            <kbd data-key="36" class="key" data-tip-title="Début (Home)" data-tip-desc="Déplace le curseur au début de la ligne de texte en cours.">Home</kbd>
+            <kbd data-key="33" class="key" data-tip-title="Page précédente" data-tip-desc="Remonte d'une page entière dans un document ou une page web.">Page Up</kbd>
+          </div>
+          <div class="group">
+            <kbd data-key="144" class="key" data-tip-title="Verr. Num" data-tip-desc="Active ou désactive le pavé numérique (les chiffres à droite). Quand allumé, les touches tapent des chiffres.">Verr Num</kbd>
+            <kbd data-key="111" class="key" data-tip-title="/ — Division (pavé num.)" data-tip-desc="Saisit le signe de division ÷ dans les calculs.">/ </kbd>
+            <kbd data-key="106" class="key" data-tip-title="* — Multiplication (pavé num.)" data-tip-desc="Saisit le signe de multiplication × dans les calculs.">*</kbd>
+            <kbd data-key="109" class="key" data-tip-title="- — Soustraction (pavé num.)" data-tip-desc="Saisit le signe moins - dans les calculs.">-</kbd>
+          </div>
+        </div>
+
+        <!-- 3ème rangée -->
+        <div class="row">
+          <div class="group">
+            <kbd data-key="9" class="key tab" data-tip-title="Tabulation (Tab ⭾)" data-tip-desc="Passe au champ suivant dans un formulaire. Dans un traitement de texte, insère une indentation." data-tip-raccourci="Pratique pour remplir des formulaires en ligne !">Tab⭾</kbd>
+            <kbd data-key="81" class="key" data-tip-title="Lettre A" data-tip-desc="Saisit la lettre a (minuscule) ou A (majuscule avec Shift ou Verr. Maj.).">A</kbd>
+            <kbd data-key="87" class="key" data-tip-title="Lettre Z" data-tip-desc="Saisit la lettre z ou Z. Avec Ctrl : Ctrl+Z annule la dernière action !" data-tip-raccourci="Ctrl + Z = Annuler une erreur">Z</kbd>
+            <kbd data-key="69" class="key" data-tip-title="Lettre E" data-tip-desc="Saisit la lettre e ou E. Avec Alt Gr : € (symbole euro !)" data-tip-raccourci="Alt Gr + E = €">E</kbd>
+            <kbd data-key="82" class="key" data-tip-title="Lettre R" data-tip-desc="Saisit la lettre r ou R.">R</kbd>
+            <kbd data-key="84" class="key" data-tip-title="Lettre T" data-tip-desc="Saisit la lettre t ou T.">T</kbd>
+            <kbd data-key="89" class="key" data-tip-title="Lettre Y" data-tip-desc="Saisit la lettre y ou Y.">Y</kbd>
+            <kbd data-key="85" class="key" data-tip-title="Lettre U" data-tip-desc="Saisit la lettre u ou U.">U</kbd>
+            <kbd data-key="73" class="key" data-tip-title="Lettre I" data-tip-desc="Saisit la lettre i ou I.">I</kbd>
+            <kbd data-key="79" class="key" data-tip-title="Lettre O" data-tip-desc="Saisit la lettre o ou O.">O</kbd>
+            <kbd data-key="80" class="key" data-tip-title="Lettre P" data-tip-desc="Saisit la lettre p ou P.">P</kbd>
+            <kbd data-key="219" class="key" data-tip-title="¨ ^ — Touches mortes" data-tip-desc="Touches d'accentuation. Appuyez d'abord sur cette touche, puis sur une voyelle : ¨+e = ë, ¨+u = ü. ^+a = â, ^+e = ê…">¨<span>^</span></kbd>
+            <kbd data-key="221" class="key" data-tip-title="£ $ ¤" data-tip-desc="Saisit £ (livre sterling). Avec Shift : $ (dollar). Avec Alt Gr : ¤ (symbole monétaire générique).">£<span>$ ¤</span></kbd>
+            <p class="key key-empty iso-enter-ghost"></p>
+          </div>
+          <div class="group">
+            <kbd data-key="46" class="key" data-tip-title="Suppr (Supprimer)" data-tip-desc="Supprime le caractère situé à droite du curseur. Supprime aussi un fichier sélectionné (envoyé à la corbeille).">Suppr</kbd>
+            <kbd data-key="35" class="key" data-tip-title="Fin" data-tip-desc="Déplace le curseur à la fin de la ligne de texte en cours.">Fin</kbd>
+            <kbd data-key="34" class="key" data-tip-title="Page suivante" data-tip-desc="Descend d'une page entière dans un document ou une page web.">Page Down</kbd>
+          </div>
+          <div class="group">
+            <kbd data-key="103" class="key" data-tip-title="7 / Début (pavé num.)" data-tip-desc="Saisit le chiffre 7. Si Verr. Num. est désactivé : va au début du document.">7<span>Home</span></kbd>
+            <kbd data-key="104" class="key num-special" data-tip-title="8 / ↑ (pavé num.)" data-tip-desc="Saisit le chiffre 8. Si Verr. Num. est désactivé : déplace le curseur vers le haut.">8<i class="fas fa-long-arrow-alt-up"></i></kbd>
+            <kbd data-key="105" class="key" data-tip-title="9 / Page préc. (pavé num.)" data-tip-desc="Saisit le chiffre 9. Si Verr. Num. est désactivé : remonte d'une page.">9<span>PgUp</span></kbd>
+            <kbd data-key="107" class="key num-large" data-tip-title="+ (pavé num.)" data-tip-desc="Saisit le signe plus + dans les calculs.">+</kbd>
+          </div>
+        </div>
+
+        <!-- 4ème rangée -->
+        <div class="row">
+          <div class="group">
+            <kbd data-key="20" class="key tab" data-tip-title="Verrouillage majuscules 🔒" data-tip-desc="Active ou désactive l'écriture en MAJUSCULES permanentes. Quand actif, toutes les lettres s'écrivent en majuscules sans avoir à maintenir Shift."><i class="fas fa-lock"></i></kbd>
+            <kbd data-key="65" class="key" data-tip-title="Lettre Q" data-tip-desc="Saisit la lettre q ou Q.">Q</kbd>
+            <kbd data-key="83" class="key" data-tip-title="Lettre S" data-tip-desc="Saisit la lettre s ou S. Avec Ctrl : Ctrl+S sauvegarde votre document !" data-tip-raccourci="Ctrl + S = Sauvegarder">S</kbd>
+            <kbd data-key="68" class="key" data-tip-title="Lettre D" data-tip-desc="Saisit la lettre d ou D.">D</kbd>
+            <kbd data-key="70" class="key" data-tip-title="Lettre F" data-tip-desc="Saisit la lettre f ou F. Avec Ctrl : Ctrl+F ouvre la recherche dans le document." data-tip-raccourci="Ctrl + F = Rechercher dans la page">F</kbd>
+            <kbd data-key="71" class="key" data-tip-title="Lettre G" data-tip-desc="Saisit la lettre g ou G.">G</kbd>
+            <kbd data-key="72" class="key" data-tip-title="Lettre H" data-tip-desc="Saisit la lettre h ou H.">H</kbd>
+            <kbd data-key="74" class="key" data-tip-title="Lettre J" data-tip-desc="Saisit la lettre j ou J.">J</kbd>
+            <kbd data-key="75" class="key" data-tip-title="Lettre K" data-tip-desc="Saisit la lettre k ou K.">K</kbd>
+            <kbd data-key="76" class="key" data-tip-title="Lettre L" data-tip-desc="Saisit la lettre l ou L.">L</kbd>
+            <kbd data-key="186" class="key" data-tip-title="Lettre M" data-tip-desc="Saisit la lettre m ou M.">M</kbd>
+            <kbd data-key="222" class="key" data-tip-title="% ù" data-tip-desc="Saisit le symbole % (pourcent). Avec Shift : ù.">%<span>ù</span></kbd>
+            <kbd data-key="220" class="key" data-tip-title="µ *" data-tip-desc="Saisit µ (micro). Avec Shift : * (astérisque).">µ<span>*</span></kbd>
+            <kbd data-key="13" class="key enter-iso" data-tip-title="Entrée ↩ (Enter)" data-tip-desc="Valide une action, envoie un formulaire ou passe à la ligne suivante dans un texte. Aussi utilisée pour ouvrir un fichier sélectionné.">Enter ↩</kbd>
+          </div>
+          <div class="empty-group"></div>
+          <div class="group">
+            <kbd data-key="100" class="key" data-tip-title="4 / ← (pavé num.)" data-tip-desc="Saisit le chiffre 4. Si Verr. Num. est désactivé : déplace le curseur vers la gauche.">4<i class="fas fa-long-arrow-alt-left"></i></kbd>
+            <kbd data-key="101" class="key num-special" data-tip-title="5 (pavé num.)" data-tip-desc="Saisit le chiffre 5.">5<i>_</i></kbd>
+            <kbd data-key="102" class="key" data-tip-title="6 / → (pavé num.)" data-tip-desc="Saisit le chiffre 6. Si Verr. Num. est désactivé : déplace le curseur vers la droite.">6<i class="fas fa-long-arrow-alt-right"></i></kbd>
+            <p class="key key-empty"></p>
+          </div>
+        </div>
+
+        <!-- 5ème rangée -->
+        <div class="row">
+          <div class="group">
+            <kbd data-key="16" class="key shift l-s" data-tip-title="Majuscule (Shift ⇧)" data-tip-desc="Maintenu enfoncé, écrit les lettres en MAJUSCULES. Donne aussi accès aux symboles du haut des touches (ex. Shift+1 = &amp;)." data-tip-raccourci="Shift + lettre = Majuscule temporaire"><span>⇧</span>&nbsp;Shift</kbd>
+            <kbd data-key="226" class="key" data-tip-title="< > \" data-tip-desc="Saisit le signe inférieur &lt;. Avec Shift : le signe supérieur &gt;. Avec Alt Gr : l'antislash \.">&#60;<span>&gt; \</span></kbd>
+            <kbd data-key="90" class="key" data-tip-title="Lettre W" data-tip-desc="Saisit la lettre w ou W.">W</kbd>
+            <kbd data-key="88" class="key" data-tip-title="Lettre X" data-tip-desc="Saisit la lettre x ou X. Avec Ctrl : Ctrl+X coupe la sélection." data-tip-raccourci="Ctrl + X = Couper">X</kbd>
+            <kbd data-key="67" class="key" data-tip-title="Lettre C" data-tip-desc="Saisit la lettre c ou C. Avec Ctrl : Ctrl+C copie la sélection." data-tip-raccourci="Ctrl + C = Copier">C</kbd>
+            <kbd data-key="86" class="key" data-tip-title="Lettre V" data-tip-desc="Saisit la lettre v ou V. Avec Ctrl : Ctrl+V colle ce qui a été copié ou coupé." data-tip-raccourci="Ctrl + V = Coller">V</kbd>
+            <kbd data-key="66" class="key" data-tip-title="Lettre B" data-tip-desc="Saisit la lettre b ou B. Avec Ctrl : Ctrl+B met le texte en gras (Bold)." data-tip-raccourci="Ctrl + B = Mettre en Gras">B</kbd>
+            <kbd data-key="78" class="key" data-tip-title="Lettre N" data-tip-desc="Saisit la lettre n ou N. Avec Ctrl : Ctrl+N ouvre un nouveau document ou une nouvelle fenêtre." data-tip-raccourci="Ctrl + N = Nouveau">N</kbd>
+            <kbd data-key="77" class="key" data-tip-title="? ," data-tip-desc="Saisit le point d'interrogation ?. Avec Shift : la virgule ,.">?<span>,</span></kbd>
+            <kbd data-key="188" class="key" data-tip-title=". ;" data-tip-desc="Saisit le point .. Avec Shift : le point-virgule ;.">.<span>;</span></kbd>
+            <kbd data-key="190" class="key" data-tip-title="/ :" data-tip-desc="Saisit le slash /. Avec Shift : les deux-points :.">/<span>:</span></kbd>
+            <kbd data-key="191" class="key" data-tip-title="§ !" data-tip-desc="Saisit le symbole de section §. Avec Shift : le point d'exclamation !.">§<span>!</span></kbd>
+            <kbd data-key="16" class="key shift r-s" data-tip-title="Majuscule (Shift ⇧)" data-tip-desc="Maintenu enfoncé, écrit les lettres en MAJUSCULES. Donne aussi accès aux symboles du haut des touches." data-tip-raccourci="Shift + lettre = Majuscule temporaire"><span>⇧</span>&nbsp;Shift</kbd>
+          </div>
+          <div class="group">
+            <p class="key key-empty"></p>
+            <kbd data-key="38" class="key" data-tip-title="Flèche vers le haut ↑" data-tip-desc="Déplace le curseur d'une ligne vers le haut dans un texte. Fait aussi défiler la page vers le haut."><i class="fas fa-arrow-up"></i></kbd>
+            <p class="key key-empty"></p>
+          </div>
+          <div class="group">
+            <kbd data-key="97" class="key" data-tip-title="1 / Fin (pavé num.)" data-tip-desc="Saisit le chiffre 1. Si Verr. Num. est désactivé : va à la fin de la ligne.">1<span>Fin</span></kbd>
+            <kbd data-key="98" class="key" data-tip-title="2 / ↓ (pavé num.)" data-tip-desc="Saisit le chiffre 2. Si Verr. Num. est désactivé : déplace le curseur vers le bas.">2<i class="fas fa-long-arrow-alt-down"></i></kbd>
+            <kbd data-key="99" class="key" data-tip-title="3 / Page suiv. (pavé num.)" data-tip-desc="Saisit le chiffre 3. Si Verr. Num. est désactivé : descend d'une page.">3<span>PdDn</span></kbd>
+            <kbd data-key="13" class="key num-large" data-tip-title="Entrée (pavé num.)" data-tip-desc="Valide une action ou un calcul. Fonctionne comme la touche Entrée principale.">Enter</kbd>
+          </div>
+        </div>
+
+        <!-- 6ème rangée -->
+        <div class="row">
+          <div class="group">
+            <kbd data-key="17" class="key" data-tip-title="Contrôle (Ctrl)" data-tip-desc="Combinée avec d'autres touches, elle exécute des raccourcis très utiles." data-tip-raccourci="Ctrl+C Copier · Ctrl+X Couper · Ctrl+V Coller · Ctrl+Z Annuler · Ctrl+S Sauvegarder">Ctrl</kbd>
+            <kbd data-key="91" class="key" data-tip-title="Touche Windows 🪟" data-tip-desc="Ouvre le menu Démarrer de Windows. Avec d'autres touches, donne accès à des raccourcis système."><i class="fab fa-windows"></i></kbd>
+            <kbd data-key="18" class="key" data-tip-title="Alt (Alternative)" data-tip-desc="Modifie l'action d'autres touches. La combinaison Alt+F4 ferme le programme actif." data-tip-raccourci="Alt + F4 = Fermer le programme">alt</kbd>
+            <kbd data-key="32" class="key spacebar" data-tip-title="Barre d'espace" data-tip-desc="La touche la plus grande ! Elle insère un espace entre les mots. Appuyez dessus chaque fois que vous voulez séparer deux mots.">Espace</kbd>
+            <kbd data-key="18" class="key" data-tip-title="Alt Gr (Caractères spéciaux)" data-tip-desc="Donne accès aux caractères spéciaux situés en bas à droite des touches." data-tip-raccourci="Alt Gr + E = €   ·   Alt Gr + 0 = @   ·   Alt Gr + 4 = {">alt gr</kbd>
+            <kbd data-key="-2" class="key" data-tip-title="Fn (Fonction)" data-tip-desc="Présente surtout sur les ordinateurs portables. Combinée avec les touches F1–F12, elle active des fonctions spéciales (réglage du volume, luminosité…).">Fn</kbd>
+            <kbd data-key="93" class="key c-menu" data-tip-title="Menu contextuel ☰" data-tip-desc="Équivaut à un clic droit de la souris. Ouvre un menu avec des options pour l'élément sélectionné."><i class="fas fa-bars"></i></kbd>
+            <kbd data-key="17" class="key" data-tip-title="Contrôle (Ctrl)" data-tip-desc="Combinée avec d'autres touches, elle exécute des raccourcis très utiles." data-tip-raccourci="Ctrl+C Copier · Ctrl+X Couper · Ctrl+V Coller · Ctrl+Z Annuler · Ctrl+S Sauvegarder">Ctrl</kbd>
+          </div>
+          <div class="group">
+            <kbd data-key="37" class="key" data-tip-title="Flèche vers la gauche ←" data-tip-desc="Déplace le curseur d'un caractère vers la gauche dans un texte."><i class="fas fa-arrow-left"></i></kbd>
+            <kbd data-key="40" class="key" data-tip-title="Flèche vers le bas ↓" data-tip-desc="Déplace le curseur d'une ligne vers le bas dans un texte. Fait aussi défiler la page vers le bas."><i class="fas fa-arrow-down"></i></kbd>
+            <kbd data-key="39" class="key" data-tip-title="Flèche vers la droite →" data-tip-desc="Déplace le curseur d'un caractère vers la droite dans un texte."><i class="fas fa-arrow-right"></i></kbd>
+          </div>
+          <div class="group">
+            <kbd data-key="96" class="key num-ins" data-tip-title="0 / Ins (pavé num.)" data-tip-desc="Saisit le chiffre 0. Si Verr. Num. est désactivé : bascule en mode Insertion.">0<span>Ins</span></kbd>
+            <kbd data-key="110" class="key" data-tip-title=". / Suppr (pavé num.)" data-tip-desc="Saisit un point décimal. Si Verr. Num. est désactivé : supprime le caractère suivant.">.<span>Del</span></kbd>
+            <p class="key key-empty"></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Tooltip DOM -->
+  <div class="key-tooltip" id="keyTooltip" role="tooltip" aria-hidden="true">
+    <div class="key-tooltip-title" id="tooltipTitle"></div>
+    <div class="key-tooltip-desc"  id="tooltipDesc"></div>
+    <div class="key-tooltip-tip"   id="tooltipTip" style="display:none;"></div>
+  </div>
+
+  <script>
+// ─── VERROUS ────────────────────────────────────────────────────
+function toggleLockClass(element) { element.classList.toggle('on'); element.querySelector('.light-key').classList.toggle('off'); element.querySelector('.light-key').classList.toggle('on'); }
+
+document.querySelectorAll('kbd').forEach(key => {
+  key.addEventListener('click', function(e) {
+    let keyAttribute = e.target.dataset.key;
+    if (e.target.localName === 'i' || e.target.localName === 'span') keyAttribute = e.target.parentNode.dataset.key;
+    switch (keyAttribute) {
+      case '20':  { const el = document.getElementById('clk'); if (el) toggleLockClass(el); break; }
+      case '144': { const el = document.getElementById('nlk'); if (el) toggleLockClass(el); break; }
+      case '145': { const el = document.getElementById('slk'); if (el) toggleLockClass(el); break; }
+    }
+  });
+});
+
+// ─── TOOLTIP SOURIS ──────────────────────────────────────────────
+(function () {
+  const tooltip = document.getElementById('keyTooltip');
+  const ttTitle = document.getElementById('tooltipTitle');
+  const ttDesc  = document.getElementById('tooltipDesc');
+  const ttTip   = document.getElementById('tooltipTip');
+  let hideTimer = null;
+
+  function showTooltip(e) {
+    const key = e.currentTarget;
+    const title = key.dataset.tipTitle, desc = key.dataset.tipDesc, raccourci = key.dataset.tipRaccourci;
+    if (!title && !desc) return;
+    clearTimeout(hideTimer);
+    ttTitle.textContent = title || '';
+    ttDesc.textContent  = desc  || '';
+    ttTip.textContent   = raccourci ? '💡 ' + raccourci : '';
+    ttTip.style.display = raccourci ? 'block' : 'none';
+    tooltip.classList.add('visible');
+    positionTooltip(e);
+  }
+  function moveTooltip(e) { if (tooltip.classList.contains('visible')) positionTooltip(e); }
+  function hideTooltip()  { hideTimer = setTimeout(() => tooltip.classList.remove('visible'), 80); }
+  function positionTooltip(e) {
+    tooltip.style.left = '-9999px'; tooltip.style.top = '-9999px';
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight, margin = 10;
+    let x = e.clientX - tw / 2, y = e.clientY - th - margin;
+    if (x < margin) x = margin;
+    if (x + tw > window.innerWidth - margin) x = window.innerWidth - tw - margin;
+    if (y < margin) y = e.clientY + margin;
+    tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+  }
+  document.querySelectorAll('.key').forEach(key => {
+    if (!key.dataset.tipTitle && !key.dataset.tipDesc) return;
+    key.addEventListener('mouseenter', showTooltip);
+    key.addEventListener('mousemove',  moveTooltip);
+    key.addEventListener('mouseleave', hideTooltip);
+  });
+})();
+
+// ─── TOOLTIP CLAVIER PHYSIQUE ────────────────────────────────────
+(function () {
+  const activeKeys = new Map();
+  const CHAR_TO_KEY = {
+    'a':81,'A':81,'z':87,'Z':87,'q':65,'Q':65,'w':90,'W':90,
+    'e':69,'E':69,'r':82,'R':82,'t':84,'T':84,'y':89,'Y':89,
+    'u':85,'U':85,'i':73,'I':73,'o':79,'O':79,'p':80,'P':80,
+    's':83,'S':83,'d':68,'D':68,'f':70,'F':70,'g':71,'G':71,
+    'h':72,'H':72,'j':74,'J':74,'k':75,'K':75,'l':76,'L':76,
+    'm':186,'M':186,'x':88,'X':88,'c':67,'C':67,'v':86,'V':86,
+    'b':66,'B':66,'n':78,'N':78,
+    '²':192,'&':49,'é':50,'"':51,"'":52,'(':53,'-':54,
+    'è':55,'_':56,'ç':57,'à':48,')':189,'=':187,
+    '^':219,'¨':219,'£':221,'$':221,'¤':221,'µ':220,'*':220,
+    '%':222,'ù':222,',':77,'?':77,';':188,'.':188,':':190,'/':190,'§':191,'!':191,
+  };
+
+  function createTooltip(keyEl) {
+    const title = keyEl.dataset.tipTitle, desc = keyEl.dataset.tipDesc, raccourci = keyEl.dataset.tipRaccourci;
+    if (!title && !desc) return null;
+    const tip = document.createElement('div');
+    tip.className = 'key-tooltip';
+    tip.style.transition = 'none'; tip.style.opacity = '0'; tip.style.transform = 'translateY(6px)';
+    tip.innerHTML = `<div class="key-tooltip-title">${title||''}</div><div class="key-tooltip-desc">${desc||''}</div>`
+      + (raccourci ? `<div class="key-tooltip-tip" style="display:block">💡 ${raccourci}</div>` : '');
+    tip.style.left = '-9999px'; tip.style.top = '-9999px';
+    document.body.appendChild(tip);
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    const rect = keyEl.getBoundingClientRect(), margin = 10, arrowH = 8;
+    let x = rect.left + rect.width/2 - tw/2, y = rect.top - th - arrowH - margin;
+    if (x < margin) x = margin;
+    if (x + tw > window.innerWidth - margin) x = window.innerWidth - tw - margin;
+    if (y < margin) y = rect.bottom + arrowH + margin;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    requestAnimationFrame(() => { tip.style.transition = ''; tip.style.opacity = ''; tip.style.transform = ''; tip.classList.add('visible'); });
+    return tip;
+  }
+
+  function removeTooltip(code) {
+    const entry = activeKeys.get(code); if (!entry) return;
+    clearTimeout(entry.safetyTimer);
+    entry.keyEl.classList.remove('key-press');
+    if (entry.tooltipEl) entry.tooltipEl.remove();
+    activeKeys.delete(code);
+  }
+
+  function findKeyEl(e) {
+    switch (e.code) {
+      case 'ShiftLeft':    return document.querySelector('kbd.l-s');
+      case 'ShiftRight':   return document.querySelector('kbd.r-s');
+      case 'ControlLeft':  return document.querySelectorAll('kbd[data-key="17"]')[0];
+      case 'ControlRight': return document.querySelectorAll('kbd[data-key="17"]')[1];
+      case 'Enter':        return document.querySelector('kbd.enter-iso[data-key="13"]') || document.querySelector('kbd.enter[data-key="13"]');
+      case 'NumpadEnter':  return document.querySelector('kbd.num-large[data-key="13"]');
+      case 'AltRight':     return document.querySelectorAll('kbd[data-key="18"]')[1];
+      case 'NumpadDivide':   return document.querySelector('kbd[data-key="111"]');
+      case 'NumpadMultiply': return document.querySelector('kbd[data-key="106"]');
+      case 'NumpadSubtract': return document.querySelector('kbd[data-key="109"]');
+      case 'NumpadAdd':      return document.querySelector('kbd[data-key="107"]');
+      case 'NumpadDecimal':  return document.querySelector('kbd[data-key="110"]');
+      case 'Numpad0': return document.querySelector('kbd[data-key="96"]');
+      case 'Numpad1': return document.querySelector('kbd[data-key="97"]');
+      case 'Numpad2': return document.querySelector('kbd[data-key="98"]');
+      case 'Numpad3': return document.querySelector('kbd[data-key="99"]');
+      case 'Numpad4': return document.querySelector('kbd[data-key="100"]');
+      case 'Numpad5': return document.querySelector('kbd[data-key="101"]');
+      case 'Numpad6': return document.querySelector('kbd[data-key="102"]');
+      case 'Numpad7': return document.querySelector('kbd[data-key="103"]');
+      case 'Numpad8': return document.querySelector('kbd[data-key="104"]');
+      case 'Numpad9': return document.querySelector('kbd[data-key="105"]');
+      case 'BracketLeft':  return document.querySelector('kbd[data-key="219"]');
+      case 'BracketRight': return document.querySelector('kbd[data-key="221"]');
+      case 'Backslash':    return document.querySelector('kbd[data-key="220"]');
+      case 'Insert':    return document.querySelector('kbd[data-key="45"]');
+      case 'Home':      return document.querySelector('kbd[data-key="36"]');
+      case 'PageUp':    return document.querySelector('kbd[data-key="33"]');
+      case 'Delete':    return document.querySelector('kbd[data-key="46"]');
+      case 'End':       return document.querySelector('kbd[data-key="35"]');
+      case 'PageDown':  return document.querySelector('kbd[data-key="34"]');
+      case 'ArrowUp':   return document.querySelector('kbd[data-key="38"]');
+      case 'ArrowDown': return document.querySelector('kbd[data-key="40"]');
+      case 'ArrowLeft': return document.querySelector('kbd[data-key="37"]');
+      case 'ArrowRight':return document.querySelector('kbd[data-key="39"]');
+      case 'Backquote': return document.querySelector('kbd[data-key="192"]');
+      case 'Minus':     return document.querySelector('kbd[data-key="189"]');
+      case 'Equal':     return document.querySelector('kbd[data-key="187"]');
+      default: {
+        const char = e.key;
+        const code = (char && CHAR_TO_KEY[char] !== undefined) ? CHAR_TO_KEY[char].toString() : e.keyCode.toString();
+        return document.querySelector(`kbd[data-key="${code}"]`);
+      }
+    }
+  }
+
+  let _pendingCtrl = null, _pendingCtrlTimer = null;
+  function commitPendingCtrl() {
+    if (!_pendingCtrl) return;
+    const { mapKey, keyEl } = _pendingCtrl; _pendingCtrl = null;
+    keyEl.classList.add('key-press');
+    const tooltipEl = createTooltip(keyEl), safetyTimer = setTimeout(() => removeTooltip(mapKey), 5000);
+    activeKeys.set(mapKey, { keyEl, tooltipEl, safetyTimer });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.keyCode >= 112 && e.keyCode <= 123) e.preventDefault();
+    if (e.code === 'PageUp' || e.code === 'PageDown') e.preventDefault();
+    if (e.code === 'Tab') e.preventDefault();
+    if (e.code === 'ContextMenu') e.preventDefault();
+    if (e.code === 'MetaLeft' || e.code === 'MetaRight') e.preventDefault();
+    const isAltGr = e.code === 'AltRight';
+    if (!isAltGr && (e.ctrlKey || e.metaKey)) e.preventDefault();
+    if (e.repeat) return;
+    const mapKey = e.code;
+    if (isAltGr) { clearTimeout(_pendingCtrlTimer); _pendingCtrl = null; }
+    if (mapKey === 'ControlLeft') {
+      if (activeKeys.has(mapKey)) return;
+      const keyEl = findKeyEl(e); if (!keyEl) return;
+      _pendingCtrl = { mapKey, keyEl };
+      _pendingCtrlTimer = setTimeout(commitPendingCtrl, 40);
+      return;
+    }
+    if (activeKeys.has(mapKey)) return;
+    const keyEl = findKeyEl(e); if (!keyEl) return;
+    keyEl.classList.add('key-press');
+    const tooltipEl = createTooltip(keyEl), safetyTimer = setTimeout(() => removeTooltip(mapKey), 5000);
+    activeKeys.set(mapKey, { keyEl, tooltipEl, safetyTimer });
+  });
+
+  window.addEventListener('keyup', (e) => { removeTooltip(e.code); });
+  window.addEventListener('blur', () => { [...activeKeys.keys()].forEach(removeTooltip); });
+})();
+
+// ─── RELAY DEPUIS INDEX.HTML ─────────────────────────────────────
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'key-relay') return;
+  const d = e.data;
+
+  // Toggle cadenas sur keydown uniquement, jamais sur repeat
+  if (d.eventType === 'keydown' && !d.repeat) {
+    switch (d.keyCode) {
+      case 20:  { const el = document.getElementById('clk'); if (el) toggleLockClass(el); break; }
+      case 144: { const el = document.getElementById('nlk'); if (el) toggleLockClass(el); break; }
+      case 145: { const el = document.getElementById('slk'); if (el) toggleLockClass(el); break; }
+    }
+  }
+
+  window.dispatchEvent(new KeyboardEvent(d.eventType, {
+    key: d.key, code: d.code, keyCode: d.keyCode, which: d.keyCode,
+    ctrlKey: d.ctrlKey, altKey: d.altKey, metaKey: d.metaKey,
+    shiftKey: d.shiftKey, repeat: d.repeat, bubbles: true, cancelable: true,
+  }));
+});
+
+// ─── AUTO-SCALE ──────────────────────────────────────────────────
+(function () {
+  const keyboard = document.querySelector('.keyboard');
+  function scaleKeyboard() { keyboard.style.zoom = (window.innerWidth / 1250) * 0.97; }
+  requestAnimationFrame(() => { scaleKeyboard(); window.addEventListener('resize', scaleKeyboard); });
+})();
+  </script>
+</body>
+</html>

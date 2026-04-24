@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glossaire du numérique - Castelnau</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #061d33;
+      --accent: #60b2c8;
+      --white: #ffffff;
+      --main-align: 80px;
+      --font-scale: 1;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* --- HERO --- */
+    .hero {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 20px;
+      scroll-snap-align: start;
+      background: radial-gradient(circle at center, #0a2d4d 0%, var(--bg-dark) 70%);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900;
+      margin-bottom: 40px;
+      max-width: 1000px;
+      line-height: 1.1;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 18px 32px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary { background: var(--accent); color: var(--bg-dark); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: var(--white); border: 1px solid rgba(255,255,255,0.2); }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+    /* --- HEADER --- */
+    .header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px var(--main-align);
+      z-index: 100;
+      background: linear-gradient(to bottom, rgba(6,29,51,0.97) 60%, transparent);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .header.visible { opacity: 1; pointer-events: auto; }
+
+    .brand { display: flex; align-items: center; gap: 40px; }
+    .logo-img { height: 50px; width: auto; display: block; }
+    .brand-text { font-weight: 400; letter-spacing: 2px; font-size: 0.8rem; text-transform: uppercase; white-space: nowrap; }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    /* --- FILTRES --- */
+    .cat-filters { display: flex; gap: 8px; }
+    .cat-wrap { position: relative; }
+    .cat-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 50px;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.72rem;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+    .cat-btn:hover { background: rgba(255,255,255,0.14); }
+    .cat-btn.active { background: var(--accent); border-color: var(--accent); color: #061d33; font-weight: 700; }
+
+    .cat-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      min-width: 200px;
+      background: rgba(6,29,51,0.98);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 500;
+      backdrop-filter: blur(20px);
+    }
+    .cat-wrap.open .cat-dropdown { display: block; }
+    .cat-dropdown a { display: block; padding: 10px 12px; border-radius: 8px; color: rgba(255,255,255,0.8); font-size: 0.8rem; text-decoration: none; }
+    .cat-dropdown a:hover { background: rgba(96,178,200,0.15); color: var(--accent); }
+
+    /* --- BARRE DE RECHERCHE AMÉLIORÉE --- */
+    .search-wrapper {
+      position: relative;
+      width: 260px;      /* largeur fixe — ne bouge jamais */
+      flex-shrink: 0;
+    }
+
+    .search-container {
+      background: rgba(255,255,255,0.1);
+      border-radius: 50px;
+      padding: 9px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      transition: border-color 0.2s, background 0.2s;
+      width: 100%;
+    }
+    .search-container:focus-within {
+      border-color: var(--accent);
+      background: rgba(96,178,200,0.08);
+    }
+    .search-container input {
+      background: transparent;
+      border: none;
+      color: white;
+      outline: none;
+      width: 0;          /* laisse flex gérer */
+      flex: 1;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      min-width: 0;
+    }
+    .search-container input::placeholder { color: rgba(255,255,255,0.4); }
+
+    .search-suggestions {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;          /* ancré à droite du wrapper */
+      left: auto;
+      width: 320px;      /* largeur fixe indépendante */
+      background: rgba(6,29,51,0.98);
+      border: 1px solid rgba(96,178,200,0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 600;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      max-height: 340px;
+      overflow-y: auto;
+    }
+    .search-suggestions.open { display: block; }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover, .suggestion-item.highlighted { background: rgba(96,178,200,0.15); }
+    .suggestion-icon { font-size: 1.3rem; width: 28px; text-align: center; flex: 0 0 28px; }
+    .suggestion-text { flex: 1; }
+    .suggestion-word { font-size: 0.9rem; font-weight: 700; color: var(--white); }
+    .suggestion-cat { font-size: 0.7rem; color: var(--accent); margin-top: 2px; opacity: 0.8; }
+    .suggestion-match { color: var(--accent); }
+
+    .search-empty {
+      padding: 20px 16px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    /* --- BOUTON TAILLE TEXTE --- */
+    .font-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 50px;
+      padding: 4px 6px;
+    }
+    .font-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      border-radius: 50px;
+      padding: 3px 9px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .font-btn.active { background: var(--accent); color: #061d33; }
+    .font-btn:first-child { font-size: 0.75rem; }
+    .font-btn:last-child { font-size: 1rem; }
+
+    /* --- SLIDES --- */
+    .slide {
+      height: 100vh;
+      width: 100vw;
+      scroll-snap-align: start;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      padding: 110px var(--main-align) 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide-top {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .category-tag {
+      color: var(--accent);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-size: 0.85rem;
+      margin-bottom: 28px;
+      display: block;
+    }
+
+    /* ── BLOCS IMAGES ── */
+    .blocs-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+    }
+
+    .bloc {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .bloc-img-wrap:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba (96,178,200,0.35);
+      transform: translateY(-4px);
+    }
+
+  .bloc-img-wrap {
+  width: 100%;
+  height: 48vh;
+  border: 1.5px solid rgba(255,255,255,0.7);
+  border-radius: 12px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.25s ease;
+  padding: 20px;
+}
+
+.bloc-img-wrap img {
+  display: block;
+  width: clamp(180px, 60%, 320px);
+  height: auto;
+  object-fit: contain;
+  transform: translateY(15px);
+}
+
+.bloc-img-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+}
+
+    .bloc-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.15;
+      user-select: none;
+    }
+    .bloc-placeholder svg { width: 32px; height: 32px; }
+    .bloc-placeholder span {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--white);
+      font-weight: 400;
+    }
+
+    /* ── LABEL INTÉRIEUR (en bas du bloc) ── */
+    .bloc-label {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  right: 16px;
+  bottom: auto;
+  padding: 0;
+  font-weight: 700;
+  font-size: clamp(0.75rem, 1vw, 0.95rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--white);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.bloc-sub {
+  display: block;
+  margin-top: 8px;
+  position: static;
+  font-size: clamp(0.8rem, 0.9vw, 0.95rem);
+  color: #ffffff;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+
+.bloc-text-panel {
+  width: 100%;
+  height: 100%;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  color: var(--white);
+}
+
+.bloc-text-panel h3 {
+  margin: 0 0 16px;
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bloc-text-panel ul {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.bloc-text-panel li {
+  font-size: clamp(0.9rem, 0.95vw, 1rem);
+  line-height: 1.5;
+  color: rgba(255,255,255,0.92);
+}
+
+
+    /* ── VIDÉO GLISSER-DÉPOSER ── */
+    .bloc:has(.drag-video-demo) .bloc-img-wrap {
+      background: #ffffff;
+      border-color: rgba(255,255,255,0.9);
+    }
+
+    .bloc:has(.drag-video-demo) .bloc-img-wrap:hover {
+      background: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .bloc:has(.drag-video-demo) .bloc-label,
+    .bloc:has(.drag-video-demo) .bloc-sub {
+      color: #061d33;
+    }
+
+    .drag-video-demo {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .drag-video-demo video {
+      width: 70%;
+      height: auto;
+      max-height: 90%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      background: #ffffff;
+      border-radius: 12px;
+    }
+
+
+    /* ── DÉMO GLISSER-DÉPOSER (ancien système conservé mais non utilisé) ── */
+    .drag-demo-pc {
+      position: relative;
+      width: min(88%, 430px);
+      height: min(62%, 250px);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)),
+        rgba(0,0,0,0.08);
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .drag-window-bar {
+      height: 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .drag-window-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+    }
+
+    .drag-window-title {
+      margin-left: 8px;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.03em;
+    }
+
+    .drag-window-body {
+      position: relative;
+      height: calc(100% - 40px);
+    }
+
+    .drag-file-ghost,
+    .drag-file,
+    .drag-folder,
+    .drag-cursor {
+      position: absolute;
+    }
+
+    .drag-file-ghost {
+      left: 58px;
+      top: 92px;
+      width: 74px;
+      height: 94px;
+      border: 2px dashed rgba(255,255,255,0.16);
+      border-radius: 16px;
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .bloc-img-wrap:hover .drag-file-ghost {
+      opacity: 1;
+    }
+
+    .drag-file {
+      left: 58px;
+      top: 92px;
+      width: 74px;
+      height: 94px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      transition: transform 0.62s cubic-bezier(.22,.8,.2,1), filter 0.35s ease;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
+    }
+
+    .bloc-img-wrap:hover .drag-file {
+      transform: translate(172px, -20px) scale(1.06);
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,0.28));
+    }
+
+    .drag-folder {
+      right: 52px;
+      top: 86px;
+      width: 106px;
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.38s ease, filter 0.38s ease;
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.12));
+    }
+
+    .bloc-img-wrap:hover .drag-folder {
+      transform: scale(1.03);
+      filter: drop-shadow(0 0 12px rgba(96,178,200,0.18));
+    }
+
+    .drag-cursor {
+      left: 86px;
+      top: 146px;
+      width: 32px;
+      height: 42px;
+      z-index: 4;
+      transition:
+        transform 0.62s cubic-bezier(.22,.8,.2,1),
+        left 0.62s cubic-bezier(.22,.8,.2,1),
+        top 0.62s cubic-bezier(.22,.8,.2,1),
+        filter 0.35s ease;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.24));
+    }
+
+    .bloc-img-wrap:hover .drag-cursor {
+      left: 258px;
+      top: 122px;
+      transform: rotate(-8deg);
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.28));
+    }
+
+    .drag-caption-left,
+    .drag-caption-right {
+      position: absolute;
+      bottom: 14px;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.54);
+      letter-spacing: 0.02em;
+    }
+
+    .drag-caption-left { left: 18px; }
+    .drag-caption-right { right: 18px; }
+
+
+    /* ── GRAND TITRE — typographie suisse, ancré en bas à gauche ── */
+    .big-title {
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 0.82;
+      margin: 0;
+      letter-spacing: -0.02em;
+      align-self: end;
+      justify-self: start;
+      white-space: nowrap;
+      /* font-size injecté par JS selon longueur du mot */
+    }
+
+
+    /* --- SECTION CLAVIER EMBARQUÉ --- */
+    .keyboard-section, .souris-section{
+  height: 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 110px var(--main-align) 60px;
+  background: radial-gradient(circle at center, #0a2d4d 0%, var(--bg-dark) 78%);
+}
+
+/* Glisser section — explorateur avec titre en bas, largeur réduite */
+.glisser-section {
+  height: 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 90px var(--main-align) 60px;
+  background: radial-gradient(circle at center, #0a2d4d 0%, var(--bg-dark) 78%);
+}
+
+.glisser-section .keyboard-embed-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+}
+
+.glisser-section .keyboard-embed-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  border-radius: 12px;
+}
+
+/* ── PHISHING SECTION ── */
+.phishing-section {
+  height: 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 90px var(--main-align) 60px;
+  background: radial-gradient(circle at center, #0a2d4d 0%, var(--bg-dark) 78%);
+}
+
+.phishing-section .keyboard-embed-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+}
+
+.phishing-section .keyboard-embed-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  border-radius: 12px;
+}
+
+/* ── RECHERCHE SECTION ── */
+.recherche-section {
+  height: 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 90px var(--main-align) 60px;
+  background: radial-gradient(circle at center, #0a2d4d 0%, var(--bg-dark) 78%);
+}
+
+.recherche-section .keyboard-embed-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+}
+
+.recherche-section .keyboard-embed-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  border-radius: 12px;
+}
+
+/* ── COOKIE SECTION ── */
+.cookie-section {
+  height: 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 90px var(--main-align) 60px;
+  background: radial-gradient(circle at center, #0a2d4d 0%, var(--bg-dark) 78%);
+}
+.cookie-section .keyboard-embed-wrap {
+  width: 100%; height: 100%;
+  overflow: hidden; display: flex; align-items: stretch;
+}
+.cookie-section .keyboard-embed-frame {
+  width: 100%; height: 100%;
+  border: 0; display: block; border-radius: 12px;
+}
+.souris-section {
+  padding: 0;
+  display: block;
+}
+
+.souris-section .keyboard-embed-wrap {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  padding: 0;
+}
+
+.souris-section .keyboard-embed-frame {
+  width: 100%;
+  height: calc(100vh - 80px);
+  display: block;
+}
+
+.keyboard-embed-wrap{
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  display: flex;
+  align-items: center;
+}
+
+    .keyboard-embed-frame{
+      width: 100%;
+      height: 90%;
+      border: 0;
+      display: block;
+      background: transparent;
+    }
+
+    .keyboard-embed-title{
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 0.82;
+      margin: 0;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      align-self: end;
+      justify-self: start;
+      color: var(--white);
+      /* font-size injecté par JS */
+    }
+
+
+
+    .key-tooltip{
+      position: absolute;
+      left: 80px;
+      bottom: 120px;
+      width: 320px;
+      padding: 22px;
+      border-radius: 14px;
+      background: rgba(6,29,51,0.95);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .25s ease;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .key-tooltip.visible{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .key-tooltip h3{
+      margin: 0 0 6px 0;
+      font-size: 18px;
+      color: #60b2c8;
+    }
+
+    .key-tooltip p{
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.4;
+      color: #d8e2ee;
+    }
+
+    /* --- COMPTEUR --- */
+    .slide-counter { position: fixed; bottom: 30px; right: var(--main-align); font-size: 0.8rem; color: rgba(255,255,255,0.4); z-index: 100; }
+
+    @media (max-width: 1024px) {
+      :root { --main-align: 40px; }
+      .cat-filters { display: none; }
+      .blocs-row { gap: 10px; flex-wrap: wrap; }
+      .bloc-img-wrap { height: 30vh; }
+    }
+  </style>
+</head>
+<body>
+
+<section class="hero" id="accueil">
+  <h1>BIENVENUE DANS LE GLOSSAIRE DU NUMÉRIQUE !</h1>
+  <div class="hero-buttons">
+    <button class="btn btn-primary" onclick="startGlossary()">Démarrer</button>
+    <a href="conseiller_numerique_plaquette_presentation.pdf" target="_blank" class="btn btn-secondary">
+      Vous êtes en difficulté ? Prenez rendez-vous avec un conseiller numérique
+    </a>
+  </div>
+</section>
+
+<section class="souris-section" id="sourisMemo">
+  <div class="keyboard-embed-wrap">
+    <iframe
+      class="keyboard-embed-frame"
+      src="souris.html"
+      title="Souris interactive"
+      loading="lazy">
+    </iframe>
+  </div>
+</section>
+
+<section class="keyboard-section" id="clavierMemo">
+  <div class="keyboard-embed-wrap">
+    <iframe
+      class="keyboard-embed-frame"
+      src="clavier.html"
+      title="Clavier interactif"
+      loading="lazy">
+    </iframe>
+
+    <div class="key-tooltip" id="keyTooltip">
+      <h3 id="tooltipTitle"></h3>
+      <p id="tooltipText"></p>
+    </div>
+  </div>
+  <h1 class="keyboard-embed-title big-title" id="keyboardTitle">Le clavier</h1>
+</section>
+
+<section class="glisser-section" id="glisserMemo">
+  <div class="keyboard-embed-wrap">
+    <iframe
+      class="keyboard-embed-frame"
+      src="glisser-deposer.html"
+      title="Glisser-déposer interactif"
+      loading="lazy">
+    </iframe>
+  </div>
+  <h1 class="keyboard-embed-title big-title" id="glisserTitle">Glisser-Déposer</h1>
+</section>
+
+<section class="phishing-section" id="phishingMemo">
+  <div class="keyboard-embed-wrap">
+    <iframe
+      class="keyboard-embed-frame"
+      src="phishing-quiz.html"
+      title="Détectez les arnaques"
+      loading="lazy">
+    </iframe>
+  </div>
+  <h1 class="keyboard-embed-title big-title" id="phishingTitle">Phishing</h1>
+</section>
+
+<section class="recherche-section" id="rechercheMemo">
+  <div class="keyboard-embed-wrap">
+    <iframe
+      class="keyboard-embed-frame"
+      src="recherche.html"
+      title="La barre de recherche"
+      loading="lazy">
+    </iframe>
+  </div>
+  <h1 class="keyboard-embed-title big-title" id="rechercheTitle">La Recherche</h1>
+</section>
+
+<section class="cookie-section" id="cookieMemo">
+  <div class="keyboard-embed-wrap">
+    <iframe
+      class="keyboard-embed-frame"
+      src="cookie-consentement.html"
+      title="Les cookies"
+      loading="lazy">
+    </iframe>
+  </div>
+  <h1 class="keyboard-embed-title big-title" id="cookieTitle">Les Cookies</h1>
+</section>
+
+<header class="header" id="mainHeader">
+  <div class="brand">
+    <img src="logo_castelnau.png" alt="Logo" class="logo-img">
+
+  </div>
+  <div class="header-right">
+    <div class="cat-filters" id="catFilters"></div>
+
+    <div class="search-wrapper" id="searchWrapper">
+      <form class="search-container" id="searchForm" autocomplete="off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="searchInput" placeholder="Rechercher un mot…" autocomplete="off" spellcheck="false">
+        <button type="button" id="searchClear" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;display:none;font-size:1rem;padding:0;line-height:1;" title="Effacer">✕</button>
+      </form>
+      <div class="search-suggestions" id="searchSuggestions"></div>
+    </div>
+  </div>
+</header>
+
+<div class="slide-counter" id="counter" style="display: none;"></div>
+<main id="mainContainer"></main>
+
+<script src="glossaire_svgs.js"></script>
+<script>
+
+// ─── GLOSSAIRE ────────────────────────────────────────────────────────────────
+const glossaire = [
+  {
+    t:"Mot de passe", cat:"bases", catLabel:"📱 Les bases", i:"🔒",
+    d:["Code secret pour <b>protéger</b> vos accès", "Ne doit <b>jamais</b> être partagé", "Mélangez lettres, chiffres et signes"],
+    blocs: [
+      { img: "images/password/password_1.png", label: "Compte protégé", sub: "Le mot de passe doit être long, personnel, difficile à deviner" },
+      {
+        html: `<iframe src="mot-de-passe.html" style="width:100%;height:100%;border:none;" title="Simulateur mot de passe"></iframe>`
+      },
+      {
+        html: `
+          <div class="bloc-text-panel" aria-hidden="true">
+            <h3>Un mot de passe sécurisé</h3>
+            <ul>
+              <li>Il doit être long, idéalement avec au moins 12 caractères.</li>
+              <li>Il mélange lettres, chiffres et signes si possible.</li>
+              <li>Il ne doit pas contenir votre prénom, votre date de naissance ou un mot trop évident.</li>
+              <li>Il vaut mieux utiliser un mot de passe différent pour chaque compte important.</li>
+            </ul>
+          </div>
+        `
+      }
+    ]
+  },
+  { 
+  t:"Pièce jointe",
+  cat:"communication",
+  catLabel:"💬 Communication",
+  i:"📎",
+  d:[
+    "Fichier <b>attaché</b> à un message ou mail",
+    "Symbolisé par un trombone 📎",
+    "Peut être une photo, un PDF, un document"
+  ],
+  blocs: [
+    { 
+      img: "images/piece_jointe/piece_jointe_icone.png", label: "Pièce jointe", sub: "La pièce jointe est toujours représenté par ce symbole"
+    },
+
+    {
+      html: `<iframe src="piece-jointe.html" style="width:100%;height:100%;border:none;" title="Simulation pièce jointe"></iframe>`
+    },
+
+    {
+      html: `
+        <div class="bloc-text-panel">
+          <h3>À retenir</h3>
+          <ul>
+            <li>Une pièce jointe est un fichier ajouté à un message</li>
+            <li>On la reconnaît grâce au trombone 📎</li>
+            <li>Elle peut contenir une photo, un PDF ou un document</li>
+            <li>Il faut la sélectionner avant d'envoyer</li>
+          </ul>
+        </div>
+      `
+    }
+  ]
+},
+{ t:"Captcha", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🤖", d:["Test pour <b>vérifier que vous êtes humain</b>", "Souvent des images à identifier ou un texte déformé", "Protège les sites contre les robots automatiques"],
+    blocs: [
+      {
+        html: `<iframe src="captcha-checkbox.html" title="Captcha case à cocher" loading="lazy"></iframe>`
+      },
+      {
+        html: `<iframe src="captcha-texte.html" title="Captcha texte déformé" loading="lazy"></iframe>`
+      },
+      {
+        html: `<iframe src="captcha-images.html" title="Captcha sélection d'images" loading="lazy"></iframe>`
+      },
+    ]
+  },
+  {
+    t:"La Souris - Rappel", cat:"utilisation", catLabel:"🖱 Utilisation quotidienne", i:"🖱️",
+    d:["Appuyer sur le bouton de la souris", "Sert à <b>sélectionner</b> un élément", "Équivaut à 'taper' sur un écran tactile"],
+    blocs: [
+      { img: "images/souris/clic_gauche.png", label: "Clic gauche", sub: "Sélectionner ou valider une action" },
+      { img: "images/souris/clic_droit.png", label: "Clic droit", sub: "Ouvrir un menu d'options (copier, coller...)" },
+      { img: "images/souris/scrolling.png", label: "Faire défiler", sub: "Utiliser la molette pour descendre dans la page" }
+    ]
+  },
+  { 
+    t:"Couper - Copier - Coller", cat:"utilisation", catLabel:"🖱 Utilisation quotidienne", i:"✂️", 
+    d:["Retirer ou dupliquer un élément pour le mettre ailleurs", "Raccourci clavier : <b>Ctrl + C / Ctrl + V</b>", "Indispensable pour manipuler du texte ou des photos"],
+    blocs: [
+      { img: "images/couper-copier-coller/action_couper.png", label: "Couper (Ctrl+X)", sub: "Retire l'élément pour le déplacer" },
+      { img: "images/couper-copier-coller/action_copier.png", label: "Copier (Ctrl+C)", sub: "Duplique l'élément sans le supprimer" },
+      { img: "images/couper-copier-coller/action_coller.png", label: "Coller (Ctrl+V)", sub: "Dépose l'élément coupé ou copié" }
+    ]
+  },
+  { t:"Fichier", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"📄", d:["Document <b>numérique</b> enregistré sur votre appareil", "Peut être un texte, une photo, une vidéo…", "Identifié par son nom et son extension (.pdf, .jpg)"],
+    blocs: [
+      { img: "images/fichiers/image_icon_windows.png", label: "Icône fichiers Images", sub: "Icône visible sur Windows, les images sont souvent au format .jpg ou .png " },
+      { img: "images/fichiers/video_icon_windows.png", label: "Icône des fichiers Vidéos", sub: "Icône visible sur Windows, les vidéos sont souvent au format .mp4 ou .mkv "},
+      { img: "images/pdf/pdf_icon_acrobat.png", label: "Icône PDF Acrobat (Adobe)", sub: "Fichier PDF fonctionnant avec l'application Acrobat (Adobe)" },
+      { img: "images/pdf/pdf_icon_windows.png", label: "Icône PDF Windows", sub: "Fichier PDF par défaut de Windows (ouvre le navigateur)" },
+    ]
+  },
+  {
+    t:"Dossier", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"📁",
+    d:["Conteneur pour <b>organiser ses fichiers</b>", "Comme une chemise dans un classeur", "Peut contenir d'autres dossiers (sous-dossiers)"],
+    blocs: [
+      { img: "images/dossier/logo_file_explorer.png", label: "Explorateur de fichiers", sub: "Contient vos fichiers" },,
+      { img: "images/dossier/interieur_dossier.png", label: "Intérieur du dossier", sub: "Affichage présent lorsque vous ouvrez un dossier"},
+      { img: "" }
+    ]
+  },
+  { t:"Internet", cat:"bases", catLabel:"📱 Les bases", i:"🌐", d:["Le réseau mondial qui <b>relie tout</b>", "Permet d'accéder aux sites et services", "Utilise le Wifi ou les données mobiles"],
+    blocs: [
+      { img: "images/internet/internet_www.png", label: "Internet", sub: "Internet relie des millions d'appareils et de sites dans le monde" },
+      { img: "images/internet/url_recherche.png", label: "Adresse ou recherche", sub: "On peut taper une adresse précise ou des mots-clés pour trouver une information" },
+      {
+        html: `
+          <div class="bloc-text-panel" aria-hidden="true">
+            <h3>Le principe d'Internet</h3>
+            <ul>
+              <li>Votre appareil se connecte à Internet grâce au Wifi ou aux données mobiles.</li>
+              <li>Le navigateur permet ensuite d'ouvrir des sites et des services.</li>
+              <li>Chaque site possède une adresse ou peut être trouvé avec une recherche.</li>
+              <li>Internet sert à communiquer, consulter, apprendre, acheter ou faire des démarches.</li>
+            </ul>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    t:"Wifi", cat:"bases", catLabel:"📱 Les bases", i:"📶",
+    d:["Internet <b>sans fil</b> à la maison", "Se connecte à votre Box Internet", "Nécessite une clé de sécurité (mot de passe)"],
+    blocs: [
+      { img: "images/wifi/wifi_fonctionnel.png", label: "Wifi activé et fonctionnel", sub: "Vous êtes connecté à Internet" },
+      { img: "images/wifi/wifi_non_fonctionnel.png", label: "Wifi désactivé ou non fonctionnel", sub: "Vérifiez vos réglages ou votre Box" },
+      { img: "images/wifi/wifi_action_requise.png", label: "Wifi public (validation requise)", sub: "Ex : mairie, train, bibliothèque…" },
+      { img: "images/wifi/wifi_secure.png", label: "Wifi sécurisé", sub: "Connexion protégée par un mot de passe" }
+    ]
+  },
+  { 
+    t:"Navigateur", cat:"bases", catLabel:"📱 Les bases", i:"🌍", 
+    d:["Logiciel pour <b>aller sur Internet</b>", "Exemples : Chrome, Firefox, Safari, Edge", "C'est là qu'on tape l'adresse d'un site"],
+    blocs: [
+      { img: "images/navigateurs/logo_chrome.png", label: "Google Chrome", sub: "Navigateur de Google, rapide et populaire" },
+      { img: "images/navigateurs/logo_firefox.png", label: "Mozilla Firefox", sub: "Navigateur libre qui protège la vie privée" },
+      { img: "images/navigateurs/logo_safari.png", label: "Apple Safari", sub: "Navigateur installé sur iPhone, iPad et Mac" },
+      { img: "images/navigateurs/logo_edge.png", label: "Microsoft Edge", sub: "Navigateur moderne installé sur Windows" }
+    ]
+  },
+  { 
+    t:"Adresse mail", cat:"bases", catLabel:"📱 Les bases", i:"📧", 
+    d:["Votre <b>identité numérique</b> pour envoyer des messages", "Ressemble à prenom.nom@service.fr", "Nécessite un <b>mot de passe</b> personnel"],
+    blocs: [
+      { img: "images/mails/logo_gmail.png", label: "Gmail", sub: "Service de messagerie Google" },
+      { img: "images/mails/logo_outlook.png", label: "Outlook", sub: "Service de messagerie Microsoft" },
+      { img: "images/mails/logo_orange_mail.png", label: "Orange Mail", sub: "Messagerie pour clients Orange" },
+      { img: "images/mails/logo_yahoo_mail.png", label: "Yahoo Mail", sub: "Service de messagerie Yahoo" },
+      { img: "images/mails/logo_laposte_mail.png", label: "La Poste", sub: "Service de messagerie La Poste" }
+    ]
+  },
+  { t:"Compte", cat:"bases", catLabel:"📱 Les bases", i:"👤", d:["Votre <b>espace personnel</b> sur un site ou appli", "Protégé par un identifiant et un mot de passe", "Permet de sauvegarder vos préférences"],
+    blocs: [
+      { img: "images/compte/compte_icon.png", label: "Mon compte", sub: "Rubrique pour retrouver vos informations personnelles" },
+      { img: "images/compte/boutons_compte.png", label: "Se connecter ou créer un compte", sub: "Boutons permettant d'entrer dans votre espace" },
+      {
+        html: `
+          <div class="bloc-text-panel" aria-hidden="true">
+            <h3>À quoi sert “Mon compte” ?</h3>
+            <ul>
+              <li>Retrouver vos commandes, rendez-vous ou documents.</li>
+              <li>Modifier votre adresse, votre numéro ou vos informations personnelles.</li>
+              <li>Suivre vos démarches sur un site administratif ou commercial.</li>
+              <li>Garder en mémoire vos préférences et vos moyens de contact.</li>
+            </ul>
+          </div>
+        `
+      }
+    ]
+  },
+  { t:"Application", cat:"bases", catLabel:"📱 Les bases", i:"📱", d:["Programme sur <b>téléphone ou tablette</b>", "Se télécharge dans une boutique (Store)", "Exemples : Météo, Banque, WhatsApp"],
+    blocs: [
+      { img: "images/application/app_mobile.png", label: "Application mobile", sub: "Icône permettant d'ouvrir un service sur votre téléphone" },
+      { img: "images/application/google_play_app_store.png", label: "Boutiques d'applications", sub: "Google Play et App Store servent à rechercher puis installer de nouvelles applications sur votre smartphone" },
+      { img: "images/application/app_mobile_visu.png", label: "Applications sur l'écran", sub: "Les applications apparaissent sous forme d'icônes" }
+    ]
+  },
+  {
+    t:"Les applications de messagerie", cat:"communication", catLabel:"💬 Communication", i:"✉️",
+    d:["Logiciels pour envoyer des <b>messages instantanés</b>", "Permettent d'échanger des textes, photos et vidéos", "Nécessitent une connexion Internet (Wifi ou 4G/5G)"],
+    blocs: [
+      { img: "images/messagerie/logo_whatsapp.png", label: "Whatsapp", sub: "Application pour discuter et appeler gratuitement" },
+      { img: "images/messagerie/logo_messenger.png", label: "Messenger", sub: "La messagerie liée à votre compte Facebook" },
+      { img: "images/messagerie/logo_sms_android.png", label: "Messages (Android)", sub: "Application classique de SMS pour téléphones Android" },
+      { img: "images/messagerie/logo_imessage.png", label: "iMessage (iPhone)", sub: "Messagerie bleue exclusive aux appareils Apple" },
+      { img: "images/messagerie/logo_signal.png", label: "Signal", sub: "Messagerie ultra-sécurisée et confidentielle" }
+    ]
+  },
+  { t:"Installer", cat:"bases", catLabel:"📱 Les bases", i:"⚙️", d:["Mettre un programme sur son appareil", "Après le <b>téléchargement</b>, l'appli devient utilisable", "Parfois demande une autorisation"],
+    blocs: [
+      { img: "images/installation_appli/install_appli.png", label: "Installer une appli", sub: "On appuie sur “Installer” pour ajouter une application" },
+      { img: "images/installation_appli/install_appli2.png", label: "Ouverture après installation", sub: "Quand l'installation est terminée, le bouton indique “Ouvrir”" },
+      {
+        html: `
+          <div class="bloc-text-panel" aria-hidden="true">
+            <h3>Les étapes d'installation</h3>
+            <ul>
+              <li>Rechercher l'application dans la boutique.</li>
+              <li>Vérifier le nom, l'éditeur et l'icône avant d'installer.</li>
+              <li>Attendre la fin du téléchargement et de l'installation.</li>
+              <li>Accepter seulement les autorisations utiles au bon fonctionnement.</li>
+            </ul>
+          </div>
+        `
+      }
+    ]
+  },
+  {
+    t:"Notifications", cat:"utilisation", catLabel:"🖱 Utilisation quotidienne", i:"🔔",
+    d:["<b>Alertes</b> envoyées par une application", "Informe d'un message, actualité ou rappel", "Peuvent être activées ou désactivées"],
+    blocs: [
+      { img: "images/notifications/notif_1.png", label: "Notifications activées", sub: "L'application prévient d'un message, ou d'une nouveauté" },
+      { img: "images/notifications/notif_desac.png", label: "Notifications désactivées", sub: "Aucune alerte visible quand les notifications sont coupées" },
+      { img: "images/notifications/notif_fake_phone.png", label: "Notifications sur smartphone", sub: "Les notifications apparaissent en haut de l'écran" },
+    ]
+  },
+{
+    t:"Télécharger", cat:"bases", catLabel:"📱 Les bases", i:"⬇️",
+    d:["Récupérer un <b>fichier depuis Internet</b>", "Symbolisé par une flèche vers le bas ↓", "Peut concerner une photo, un PDF ou une appli"],
+    blocs: [
+      { img: "images/telecharger/telecharger_icone.png", label: "Télécharger", sub: "Le bouton est toujours représenté par une flèche vers le bas" },
+      { img: "", label: "Envoyer", sub: "Mettre en ligne" },,
+      { img: "" }
+    ]
+  },
+  { t:"Bluetooth", cat:"communication", catLabel:"💬 Communication", i:"🔵",
+  d:["Permet de <b>connecter</b> deux appareils sans fil ni câble", "Fonctionne à courte distance (<b>environ 10 mètres</b>)", "Sert pour casques, enceintes, claviers, souris…"],
+  blocs: [
+    { img: "images/bluetooth/bluetooth_icon.png", label: "Le symbole Bluetooth", sub: "Symbole représentant le Bluetooth visible sur les appareils" },
+    { img: "images/bluetooth/bluetooth_active.png", label: "Activer le Bluetooth", sub: "Glissez de haut en bas puis appuyez sur l'icône Bluetooth" },
+    { img: "", label: "L'appairage", sub: "Associer deux appareils entre eux : à faire une seule fois" }
+  ]
+},
+  { t:"Recherche", cat:"bases", catLabel:"📱 Les bases", i:"🔍", d:["Taper des mots pour <b>trouver une information</b>", "S'effectue dans la barre du navigateur", "Exemples : Google, Bing, Qwant"],
+    blocs: [
+      { img: "", label: "Rechercher sur Internet" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  
+  { t:"Menu", cat:"utilisation", catLabel:"🖱 Utilisation quotidienne", i:"☰", d:["Liste d'<b>options et de fonctionnalités</b>", "Souvent représenté par trois traits ☰", "Permet d'accéder aux réglages ou rubriques"],
+    blocs: [
+      { img: "", label: "Menu" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Mise à jour", cat:"utilisation", catLabel:"🖱 Utilisation quotidienne", i:"🔄", d:["Amélioration <b>automatique</b> d'un logiciel", "Corrige des bugs et ajoute des fonctions", "Recommandé de toujours accepter les mises à jour"],
+    blocs: [
+      { img: "", label: "Mise à jour" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Paramètres", cat:"utilisation", catLabel:"🖱 Utilisation quotidienne", i:"⚙️", d:["Zone pour <b>configurer</b> son appareil ou appli", "Symbolisé par une roue dentée ⚙", "Permet de changer le volume, le fond d'écran…"],
+    blocs: [
+      { img: "", label: "Paramètres" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  {
+    t:"Appel vidéo", cat:"communication", catLabel:"💬 Communication", i:"📹",
+    d:["Appel avec <b>image et son</b> en temps réel", "Via WhatsApp, FaceTime, Teams, Zoom…", "Nécessite une bonne connexion Internet"],
+    blocs: [
+      { img: "", label: "Appel vidéo", sub: "Voir et entendre" },
+      { img: "", label: "Appel classique", sub: "Entendre seulement" },,
+      { img: "" }
+    ]
+  },
+  { t:"Contact", cat:"communication", catLabel:"💬 Communication", i:"👥", d:["Personne enregistrée dans votre <b>répertoire</b>", "Contient son nom, numéro ou adresse mail", "Accessible depuis l'appli Téléphone ou Mail"],
+    blocs: [
+      { img: "", label: "Répertoire" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Discussion", cat:"communication", catLabel:"💬 Communication", i:"💬", d:["Conversation par <b>messages écrits</b>", "Peut être individuelle ou en groupe", "Souvent appelée aussi 'chat'"],
+    blocs: [
+      { img: "", label: "Discussion / Chat" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Groupe", cat:"communication", catLabel:"💬 Communication", i:"👨‍👩‍👧", d:["Conversation avec <b>plusieurs personnes</b>", "Pratique pour la famille ou les associations", "Chaque membre voit tous les messages"],
+    blocs: [
+      { img: "", label: "Groupe de discussion" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Messenger", cat:"communication", catLabel:"💬 Communication", i:"💙", d:["Application de messagerie de <b>Facebook/Meta</b>", "Permet d'envoyer messages, photos, appels vidéo", "Gratuit et disponible sur téléphone"],
+    blocs: [
+      { img: "", label: "Messenger" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"MMS", cat:"communication", catLabel:"💬 Communication", i:"🖼️", d:["Message avec <b>photo, vidéo ou son</b>", "Envoyé via le réseau téléphonique", "Peut être payant selon l'abonnement"],
+    blocs: [
+      { img: "", label: "MMS" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  {
+    t:"SMS", cat:"communication", catLabel:"💬 Communication", i:"📱",
+    d:["Message <b>texte</b> envoyé par téléphone", "Limité à 160 caractères à l'origine", "Ne nécessite pas de connexion Internet"],
+    blocs: [
+      { img: "", label: "SMS", sub: "Texte court sans Internet" },
+      { img: "", label: "Mail", sub: "Message avec Internet" },,
+      { img: "" }
+    ]
+  },
+  { t:"Barre de recherche", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🔎", d:["Zone en haut du navigateur pour <b>taper une adresse</b>", "On y saisit aussi des mots-clés pour chercher", "Affiche des suggestions au fur et à mesure"],
+    blocs: [
+      { img: "", label: "Barre de recherche" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+
+  { t:"Cookie", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🍪", d:["Petit fichier <b>mémorisé</b> par votre navigateur", "Retient vos préférences sur un site", "Peut servir à la publicité ciblée"],
+    blocs: [
+      { img: "", label: "Cookie" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Favoris", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"⭐", d:["Sites <b>enregistrés</b> pour y revenir facilement", "Symbolisé par une étoile ⭐ ou un marque-page", "Accessible depuis le menu du navigateur"],
+    blocs: [
+      { img: "", label: "Favoris" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Historique", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🕐", d:["Liste des <b>sites visités</b> récemment", "Permet de retrouver une page consultée", "Peut être effacé pour plus de confidentialité"],
+    blocs: [
+      { img: "", label: "Historique" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Lien", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🔗", d:["Texte ou image <b>cliquable</b> menant vers une autre page", "Souvent souligné ou en couleur", "Aussi appelé 'lien hypertexte' ou 'URL'"],
+    blocs: [
+      { img: "", label: "Lien hypertexte" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Onglet", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🗂️", d:["Fenêtre <b>à l'intérieur</b> du navigateur", "Permet d'avoir plusieurs sites ouverts à la fois", "Cliquer sur + pour en ouvrir un nouveau"],
+    blocs: [
+      { img: "", label: "Onglet navigateur" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Pop-up", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🪟", d:["Fenêtre qui <b>s'ouvre automatiquement</b>", "Peut être une publicité ou une alerte", "Souvent bloqué par les navigateurs modernes"],
+    blocs: [
+      { img: "", label: "Pop-up" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Publicité", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"📢", d:["Annonce <b>commerciale</b> affichée sur un site", "Peut être une bannière, une vidéo ou un texte", "Des bloqueurs de pub existent pour les éviter"],
+    blocs: [
+      { img: "", label: "Publicité en ligne" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Site web", cat:"navigation", catLabel:"🌐 Internet et navigation", i:"🌐", d:["Ensemble de <b>pages accessibles sur Internet</b>", "Chaque site a une adresse unique (URL)", "Exemples : ameli.fr, service-public.fr"],
+    blocs: [
+      { img: "", label: "Site web" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  {
+    t:"Antivirus", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🛡️",
+    d:["Logiciel qui <b>protège</b> votre appareil", "Détecte et supprime les virus", "Exemples : Windows Defender, Avast"],
+    blocs: [
+      { img: "", label: "Appareil protégé", sub: "Antivirus actif" },
+      { img: "", label: "Appareil non protégé", sub: "Risque d'infection" },,
+      { img: "" }
+    ]
+  },
+  { t:"Arnaque", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"⚠️", d:["Tentative de vous <b>tromper</b> pour voler de l'argent", "Souvent par faux mail, SMS ou appel", "Ne jamais donner ses <b>coordonnées bancaires</b>"],
+    blocs: [
+      { img: "", label: "Arnaque en ligne" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Code de vérification", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🔢", d:["Code envoyé par <b>SMS ou mail</b> pour confirmer", "Prouve que c'est bien vous qui vous connectez", "À saisir rapidement car il expire"],
+    blocs: [
+      { img: "", label: "Code de vérification" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Confidentialité", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🔏", d:["Protection de vos <b>informations personnelles</b>", "Vous choisissez qui peut voir vos données", "Réglable dans les paramètres de chaque appli"],
+    blocs: [
+      { img: "", label: "Confidentialité" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Données personnelles", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🗄️", d:["Informations qui <b>vous identifient</b> (nom, adresse…)", "À protéger et ne pas diffuser n'importe où", "Les sites doivent vous demander votre accord"],
+    blocs: [
+      { img: "", label: "Données personnelles" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Double authentification", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🔑", d:["<b>Deuxième vérification</b> lors d'une connexion", "Un code envoyé par SMS en plus du mot de passe", "Rend votre compte beaucoup plus sécurisé"],
+    blocs: [
+      { img: "", label: "Double authentification" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  {
+    t:"Phishing", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🎣",
+    d:["Faux mail ou SMS pour <b>voler vos identifiants</b>", "Imite l'apparence de votre banque ou des impôts", "Ne jamais cliquer sur les <b>liens douteux</b>"],
+    blocs: [
+      { img: "", label: "Hameçonnage", sub: "Faux mail imitant votre banque" },
+      { img: "", label: "Mail suspect", sub: "Ne pas cliquer !" },,
+      { img: "" }
+    ]
+  },
+  { t:"Sauvegarde", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"💾", d:["Copie de vos données <b>en lieu sûr</b>", "Protège en cas de panne ou de vol", "Peut se faire sur clé USB, disque dur ou cloud"],
+    blocs: [
+      { img: "", label: "Sauvegarde" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  {
+    t:"Spam", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🚫",
+    d:["Messagerie <b>indésirable</b> non sollicitée", "Souvent de la pub ou une tentative d'arnaque", "Généralement filtré dans 'Indésirables'"],
+    blocs: [
+      { img: "", label: "Mail normal", sub: "Expéditeur connu" },
+      { img: "", label: "Spam", sub: "Message indésirable" },,
+      { img: "" }
+    ]
+  },
+  { t:"Virus", cat:"securite", catLabel:"🔐 Sécurité numérique", i:"🦠", d:["Programme malveillant qui <b>infecte</b> votre appareil", "Peut voler des données ou bloquer l'accès", "Éviter les téléchargements sur des sites inconnus"],
+    blocs: [
+      { img: "", label: "Virus informatique" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  {
+    t:"Cloud", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"☁️",
+    d:["Stockage de fichiers <b>sur Internet</b>", "Accessible depuis n'importe quel appareil", "Exemples : Google Drive, iCloud, OneDrive"],
+    blocs: [
+      { img: "", label: "Envoyer vers le cloud", sub: "Sauvegarder en ligne" },
+      { img: "", label: "Récupérer du cloud", sub: "Télécharger depuis Internet" },,
+      { img: "" }
+    ]
+  },
+  { t:"Drive", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"💿", d:["Service de <b>stockage en ligne</b>", "Google Drive, OneDrive ou iCloud", "Partager des fichiers facilement avec quelqu'un"],
+    blocs: [
+      { img: "", label: "Drive / Stockage cloud" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"PDF", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"📕", d:["Format de <b>document non modifiable</b>", "Idéal pour envoyer une facture ou un formulaire", "Se lit avec Adobe Reader ou votre navigateur"],
+    blocs: [
+      { img: "images/pdf/pdf_icon_acrobat.png", label: "Icône PDF Acrobat (Adobe)", sub: "Fichier PDF fonctionnant avec l'application Acrobat (Adobe)" },,
+      { img: "images/pdf/pdf_icon_windows.png", label: "Icône PDF Windows", sub: "Fichier PDF par défaut de Windows (ouvre le navigateur)" },
+      { img: "" }
+    ]
+  },
+  { t:"Photo", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"🖼️", d:["Image <b>numérique</b> prise ou reçue", "Stockée dans la galerie de votre téléphone", "Peut être partagée par message ou mail"],
+    blocs: [
+      { img: "", label: "Photo numérique" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Scan", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"📠", d:["Numériser un <b>document papier</b>", "Transforme une feuille en fichier numérique", "Possible avec une appli téléphone (ex. Adobe Scan)"],
+    blocs: [
+      { img: "", label: "Scanner un document" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Vidéo", cat:"stockage", catLabel:"☁️ Stockage et fichiers", i:"🎬", d:["Fichier contenant des <b>images animées</b>", "Prend plus de place qu'une photo", "Formats courants : .mp4, .mov"],
+    blocs: [
+      { img: "", label: "Vidéo numérique" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Commande", cat:"services", catLabel:"🛒 Services en ligne", i:"📦", d:["Achat <b>validé</b> sur un site marchand", "Reçoit un <b>numéro de suivi</b>", "Suivi possible depuis votre compte client"],
+    blocs: [
+      { img: "", label: "Commander en ligne" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Compte client", cat:"services", catLabel:"🛒 Services en ligne", i:"👤", d:["Votre espace <b>personnel</b> sur un site marchand", "Mémorise vos adresses et commandes", "Protégé par identifiant et mot de passe"],
+    blocs: [
+      { img: "", label: "Compte client" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Confirmation", cat:"services", catLabel:"🛒 Services en ligne", i:"✅", d:["Message qui <b>valide</b> votre action", "Reçue par mail après une commande ou inscription", "Parfois nécessite un clic pour finaliser"],
+    blocs: [
+      { img: "", label: "Confirmation" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Facture", cat:"services", catLabel:"🛒 Services en ligne", i:"🧾", d:["Document <b>officiel</b> attestant un achat", "Envoyée par mail après la commande", "À conserver pour tout remboursement éventuel"],
+    blocs: [
+      { img: "", label: "Facture numérique" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Identifiant", cat:"services", catLabel:"🛒 Services en ligne", i:"🪪", d:["Votre <b>nom d'utilisateur</b> sur un site", "Souvent votre adresse mail", "Associé à un mot de passe pour se connecter"],
+    blocs: [
+      { img: "", label: "Identifiant / Login" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Livraison", cat:"services", catLabel:"🛒 Services en ligne", i:"🚚", d:["Acheminement d'un <b>colis à domicile</b>", "Délai indiqué lors de la commande", "Suivi possible avec le numéro de colis"],
+    blocs: [
+      { img: "", label: "Livraison" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Panier", cat:"services", catLabel:"🛒 Services en ligne", i:"🛒", d:["Zone où sont <b>mis les articles</b> avant achat", "Symbolisé par un caddie ou un sac", "Peut être modifié avant de valider"],
+    blocs: [
+      { img: "", label: "Panier d'achat" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+  { t:"Paiement en ligne", cat:"services", catLabel:"🛒 Services en ligne", i:"💳", d:["Régler un achat <b>depuis Internet</b>", "Saisie du numéro de carte bancaire", "Le cadenas 🔒 indique un site sécurisé"],
+    blocs: [
+      { img: "", label: "Paiement en ligne" },,
+      { img: "" },
+      { img: "" }
+    ]
+  },
+{
+  t:"QR code", cat:"services", catLabel:"🛒 Services en ligne", i:"⬛",
+  d:[
+    "Image carrée à scanner avec son <b>téléphone</b>",
+    "Ouvre un site, un menu ou une information",
+    "Disponible dans les restaurants, musées, transports"
+  ],
+  blocs: [
+    {
+      html: `
+        <a
+          href="https://glossaire-du-numerique.netlify.app/bravo-qr.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-decoration:none;"
+          aria-label="Ouvrir la page Bravo QR code"
+        >
+          <img
+            src="images/qr-code-premium.png"
+            alt="QR code à scanner"
+            style="width:70%;height:70%;object-fit:contain;display:block;"
+          >
+        </a>
+      `,
+      label: "QR code",
+      sub: "Scannez-le avec votre téléphone"
+    },
+    {
+      html: `
+        <div class="bloc-text-panel">
+          <h3>À retenir</h3>
+          <ul>
+            <li>Ouvrez l'appareil photo de votre téléphone.</li>
+            <li>Pointez-le vers le QR code sans prendre de photo.</li>
+            <li>Un lien apparaît automatiquement à l'écran.</li>
+            <li>Appuyez sur ce lien pour ouvrir la page.</li>
+          </ul>
+        </div>
+      `
+    }
+  ]
+},
+{
+  t:"Validation", cat:"services", catLabel:"🛒 Services en ligne", i:"☑️", d:["Action de <b>confirmer</b> un choix ou une saisie", "Souvent un bouton 'Valider' ou 'Confirmer'", "Étape finale avant envoi ou achat"],
+  blocs: [
+    { img: "", label: "Valider une action" },,
+    { img: "" },
+    { img: "" }
+  ]
+},
+];
+
+// ─── UTILITAIRES ──────────────────────────────────────────────────────────────
+function slugify(s) { return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,""); }
+function norm(s) { return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+
+function fuzzyMatch(query, target) {
+  const q = norm(query);
+  const t = norm(target);
+  if (t.startsWith(q)) return { match: true, score: 3 };
+  if (t.includes(q))  return { match: true, score: 2 };
+  const words = q.split(/\s+/);
+  if (words.every(w => t.includes(w))) return { match: true, score: 1 };
+  return { match: false, score: -1 };
+}
+
+// ─── GÉNÉRATION DES SLIDES ────────────────────────────────────────────────────
+const container = document.getElementById('mainContainer');
+const firstWordId = slugify(glossaire[0].t);
+
+// Icône placeholder (image manquante)
+const PLACEHOLDER_ICON = `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="8" width="32" height="26" rx="4" stroke="#60b2c8" stroke-width="2"/>
+  <circle cx="14" cy="18" r="3" stroke="#60b2c8" stroke-width="2"/>
+  <path d="M4 28 L12 20 L18 26 L24 20 L36 30" stroke="#60b2c8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+// ─── CLÉ SVG à partir du titre du mot ────────────────────────────────────────
+const BLOC_KEYS = ['comprendre', 'reconnaitre', 'agir'];
+function svgKey(title) {
+  return title.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s\-]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+glossaire.forEach((item) => {
+  const sec = document.createElement('section');
+  sec.className = 'slide';
+  sec.id = slugify(item.t);
+  sec.dataset.cat = item.cat;
+  const motKey = svgKey(item.t);
+
+  const hasBlocs = item.blocs && item.blocs.length > 0;
+
+  // Rangée de blocs images (placeholders si pas d'image)
+  let blocsHTML = '';
+  if (hasBlocs) {
+    const cardsHTML = item.blocs.map((b, idx) => {
+      let imgHTML;
+      if (b.html) {
+        imgHTML = b.html;
+      } else if (b.img) {
+        imgHTML = `<img src="${b.img}" alt="${b.label || ''}">`;
+      } else {
+        const svgData = (typeof GLOSSAIRE_SVGS !== 'undefined')
+          ? GLOSSAIRE_SVGS[motKey + '_' + (BLOC_KEYS[idx] || 'comprendre')]
+          : null;
+        imgHTML = svgData
+          ? svgData
+          : `<div class="bloc-placeholder">${PLACEHOLDER_ICON}<span>Image</span></div>`;
+      }
+      return `
+        <div class="bloc">
+          <div class="bloc-img-wrap">
+            ${imgHTML}
+            ${b.label ? `<div class="bloc-label">${b.label}${b.sub ? `<span class="bloc-sub">${b.sub}</span>` : ''}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+    blocsHTML = `<div class="blocs-row">${cardsHTML}</div>`;
+  }
+
+  sec.innerHTML = `
+    <div class="slide-top">
+      <span class="category-tag">${item.catLabel}</span>
+      ${blocsHTML}
+    </div>
+    <h1 class="big-title">${item.t}</h1>
+  `;
+  container.appendChild(sec);
+});
+
+// ─── TAILLE DYNAMIQUE DES TITRES (toujours sur une ligne) ────────────────────
+function fitTitles() {
+  const availableWidth = window.innerWidth - 2 * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--main-align'));
+  document.querySelectorAll('.big-title').forEach(el => {
+    // Part d'une taille max et réduit jusqu'à ce que ça tienne
+    let size = Math.min(window.innerWidth * 0.12, 112); // max ~7rem à 1600px
+    el.style.fontSize = size + 'px';
+    while (el.scrollWidth > availableWidth && size > 28) {
+      size -= 1;
+      el.style.fontSize = size + 'px';
+    }
+  });
+}
+fitTitles();
+window.addEventListener('resize', fitTitles);
+
+// ─── HEADER AU SCROLL ─────────────────────────────────────────────────────────
+const header = document.getElementById('mainHeader');
+const counter = document.getElementById('counter');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > window.innerHeight * 0.5) {
+    header.classList.add('visible');
+    counter.style.display = 'block';
+  } else {
+    header.classList.remove('visible');
+    counter.style.display = 'none';
+  }
+});
+
+// ─── FILTRES ──────────────────────────────────────────────────────────────────
+const cats = [
+  { key:'all', label:'Tous' },
+  { key:'bases', label:'Les bases' },
+  { key:'utilisation', label:'Utilisation' },
+  { key:'communication', label:'Communication' },
+  { key:'navigation', label:'Internet' },
+  { key:'securite', label:'Sécurité' },
+  { key:'stockage', label:'Stockage' },
+  { key:'services', label:'Services' }
+];
+
+const filtersEl = document.getElementById('catFilters');
+cats.forEach(c => {
+  const wrap = document.createElement('div');
+  wrap.className = 'cat-wrap';
+  const btn = document.createElement('button');
+  btn.className = 'cat-btn' + (c.key === 'all' ? ' active' : '');
+  btn.textContent = c.label;
+  wrap.appendChild(btn);
+
+  if (c.key !== 'all') {
+    const dropdown = document.createElement('div');
+    dropdown.className = 'cat-dropdown';
+    glossaire.filter(i => i.cat === c.key).forEach(item => {
+      const a = document.createElement('a');
+      a.href = '#' + slugify(item.t);
+      a.textContent = item.i + ' ' + item.t;
+      a.onclick = (e) => {
+        e.preventDefault();
+        applyFilter(c.key);
+        setTimeout(() => document.getElementById(slugify(item.t)).scrollIntoView({behavior:'smooth'}), 50);
+      };
+      dropdown.appendChild(a);
+    });
+    wrap.appendChild(dropdown);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const wasOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.cat-wrap').forEach(w => w.classList.remove('open'));
+      if (!wasOpen) wrap.classList.add('open');
+    };
+  } else {
+    btn.onclick = () => {
+      applyFilter('all');
+      window.scrollTo({top: window.innerHeight, behavior: 'smooth'});
+    };
+  }
+  filtersEl.appendChild(wrap);
+});
+
+function applyFilter(catKey) {
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === cats.find(x => x.key === catKey).label);
+  });
+  document.querySelectorAll('.slide').forEach(s => {
+    s.style.display = (catKey === 'all' || s.dataset.cat === catKey) ? 'grid' : 'none';
+  });
+  updateCounter();
+}
+
+// ─── COMPTEUR ─────────────────────────────────────────────────────────────────
+let currentObserver = null;
+function updateCounter() {
+  const visible = [...document.querySelectorAll('.slide')].filter(s => s.style.display !== 'none');
+  if (currentObserver) currentObserver.disconnect();
+  currentObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const idx = visible.indexOf(e.target) + 1;
+        document.getElementById('counter').textContent = `${idx} / ${visible.length}`;
+      }
+    });
+  }, { threshold: 0.6 });
+  visible.forEach(s => currentObserver.observe(s));
+}
+updateCounter();
+
+// ─── RECHERCHE AVEC SUGGESTIONS EN TEMPS RÉEL ─────────────────────────────────
+const searchInput = document.getElementById('searchInput');
+const searchSuggs = document.getElementById('searchSuggestions');
+const searchClear = document.getElementById('searchClear');
+
+let highlightIdx  = -1;
+let currentSuggs  = [];
+
+function getSuggestions(q) {
+  if (!q || q.length < 1) return [];
+  return glossaire
+    .map(item => ({ item, ...fuzzyMatch(q, item.t) }))
+    .filter(r => r.match)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
+}
+
+function highlightText(text, query) {
+  const q = norm(query);
+  const t = norm(text);
+  const idx = t.indexOf(q);
+  if (idx === -1) return text;
+  return text.slice(0, idx) +
+    `<span class="suggestion-match">${text.slice(idx, idx + query.length)}</span>` +
+    text.slice(idx + query.length);
+}
+
+function renderSuggestions(q) {
+  currentSuggs = getSuggestions(q);
+  highlightIdx = -1;
+
+  if (!q) {
+    searchSuggs.classList.remove('open');
+    return;
+  }
+
+  if (currentSuggs.length === 0) {
+    searchSuggs.innerHTML = `<div class="search-empty">Aucun résultat pour « ${q} »</div>`;
+    searchSuggs.classList.add('open');
+    return;
+  }
+
+  searchSuggs.innerHTML = currentSuggs.map((r, i) => `
+    <div class="suggestion-item" data-idx="${i}">
+      <span class="suggestion-icon">${r.item.i}</span>
+      <div class="suggestion-text">
+        <div class="suggestion-word">${highlightText(r.item.t, q)}</div>
+        <div class="suggestion-cat">${r.item.catLabel}</div>
+      </div>
+    </div>
+  `).join('');
+
+  searchSuggs.querySelectorAll('.suggestion-item').forEach(el => {
+    el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      selectSuggestion(parseInt(el.dataset.idx));
+    });
+  });
+
+  searchSuggs.classList.add('open');
+}
+
+function selectSuggestion(idx) {
+  const r = currentSuggs[idx];
+  if (!r) return;
+  searchInput.value = r.item.t;
+  searchSuggs.classList.remove('open');
+  searchClear.style.display = 'block';
+  applyFilter('all');
+  setTimeout(() => {
+    document.getElementById(slugify(r.item.t)).scrollIntoView({behavior:'smooth'});
+  }, 50);
+}
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  searchClear.style.display = q ? 'block' : 'none';
+  renderSuggestions(q);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  const items = searchSuggs.querySelectorAll('.suggestion-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    highlightIdx = Math.min(highlightIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('highlighted', i === highlightIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    highlightIdx = Math.max(highlightIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('highlighted', i === highlightIdx));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (highlightIdx >= 0) selectSuggestion(highlightIdx);
+    else if (currentSuggs.length > 0) selectSuggestion(0);
+  } else if (e.key === 'Escape') {
+    searchSuggs.classList.remove('open');
+  }
+});
+
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim()) renderSuggestions(searchInput.value.trim());
+});
+
+searchInput.addEventListener('blur', () => {
+  setTimeout(() => searchSuggs.classList.remove('open'), 150);
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  searchClear.style.display = 'none';
+  searchSuggs.classList.remove('open');
+  searchInput.focus();
+});
+
+document.getElementById('searchForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (currentSuggs.length > 0) selectSuggestion(highlightIdx >= 0 ? highlightIdx : 0);
+});
+
+// ─── TAILLE DU TEXTE ──────────────────────────────────────────────────────────
+function setFontScale(scale) {
+  document.documentElement.style.setProperty('--font-scale', scale);
+  document.getElementById('fontSmall').classList.toggle('active', scale === 1);
+  document.getElementById('fontLarge').classList.toggle('active', scale === 1.25);
+}
+
+
+
+
+
+// ─── DIVERS ───────────────────────────────────────────────────────────────────
+function startGlossary() {
+  document.getElementById('sourisMemo').scrollIntoView({behavior:'smooth'});
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.cat-wrap')) document.querySelectorAll('.cat-wrap').forEach(w => w.classList.remove('open'));
+  if (!e.target.closest('#searchWrapper')) searchSuggs.classList.remove('open');
+});
+
+window.addEventListener("message", (event) => {
+  if (!event.data || event.data.type !== "keyboard-memo") return;
+
+  const tooltip = document.getElementById("keyTooltip");
+  const tooltipTitle = document.getElementById("tooltipTitle");
+  const tooltipText = document.getElementById("tooltipText");
+
+  if (!tooltip || !tooltipTitle || !tooltipText) return;
+
+  if (event.data.action === "show") {
+    tooltipTitle.textContent = event.data.title || "";
+    tooltipText.textContent = event.data.text || "";
+    tooltip.classList.add("visible");
+  }
+
+  if (event.data.action === "hide") {
+    tooltip.classList.remove("visible");
+  }
+});
+
+// ─── RELAY CLAVIER → IFRAME via postMessage ─────────────────────────────────
+(function () {
+  const section = document.getElementById('clavierMemo');
+  const frame   = document.querySelector('#clavierMemo .keyboard-embed-frame');
+  if (!frame || !section) return;
+
+  function isKeyboardVisible() {
+    const rect = section.getBoundingClientRect();
+    return rect.top < window.innerHeight && rect.bottom > 0;
+  }
+
+  function relay(type, e) {
+    if (!isKeyboardVisible()) return;
+
+    // Bloquer TOUS les effets natifs du navigateur quand le clavier est visible
+    e.preventDefault();
+
+    frame.contentWindow.postMessage({
+      type: 'key-relay',
+      eventType: type,
+      key:      e.key,
+      code:     e.code,
+      keyCode:  e.keyCode,
+      ctrlKey:  e.ctrlKey,
+      altKey:   e.altKey,
+      metaKey:  e.metaKey,
+      shiftKey: e.shiftKey,
+      repeat:   e.repeat,
+    }, '*');
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (document.activeElement === searchInput) return;
+    relay('keydown', e);
+  }, { capture: true });
+  document.addEventListener('keyup', (e) => {
+    if (document.activeElement === searchInput) return;
+    relay('keyup', e);
+  }, { capture: true });
+})();
+</script>
+</body>
+</html>

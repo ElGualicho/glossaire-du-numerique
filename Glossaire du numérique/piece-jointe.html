@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pièce jointe</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --border: #dde3ec;
+    --text: #1a2840;
+    --text-muted: #7b8ba4;
+    --accent: #60b2c8;
+    --accent-dark: #061d33;
+    --accent-light: #e8f4f8;
+    --danger: #e05252;
+    --success: #3dba7a;
+    --shadow: 0 4px 24px rgba(6,29,51,0.10);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  /* ── FENÊTRE MAIL ── */
+  .mail-window {
+    width: 100%;
+    background: var(--surface);
+    box-shadow: none;
+    border-radius: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Barre de titre */
+  .mail-header {
+    background: var(--accent-dark);
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .mail-header-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.01em;
+  }
+
+  .mail-header-dots {
+    display: flex;
+    gap: 7px;
+  }
+
+  .dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+  .dot-r { background: #ff6b6b; }
+  .dot-y { background: #ffd166; }
+  .dot-g { background: #3dba7a; }
+
+  /* Champs To / Objet */
+  .mail-fields {
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .mail-field {
+    display: flex;
+    align-items: center;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .mail-field:last-child { border-bottom: none; }
+
+  .field-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    width: 46px;
+    flex-shrink: 0;
+  }
+
+  .field-value {
+    font-size: 0.88rem;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .field-chip {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  /* Corps du message */
+  .mail-body {
+    padding: 16px 18px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    position: relative;
+  }
+
+  .mail-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.35;
+    flex-shrink: 0;
+  }
+
+  .mail-text .placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Zone pièce jointe attachée */
+  .attachment-zone {
+    min-height: 38px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .attachment-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-light);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--accent-dark);
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+
+  .attachment-tag.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .attachment-tag .tag-icon { font-size: 1rem; }
+
+  .attachment-tag .tag-remove {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(6,29,51,0.12);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s;
+  }
+  .attachment-tag .tag-remove:hover { background: rgba(6,29,51,0.22); }
+
+  /* ── BARRE D'OUTILS ── */
+  .mail-toolbar {
+    border-top: 1px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: #fafbfd;
+    position: relative;
+  }
+
+  .toolbar-left { display: flex; align-items: center; gap: 8px; }
+
+  .attach-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    padding: 9px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .attach-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-dark);
+    background: var(--accent-light);
+  }
+
+  .attach-btn.has-file {
+    border-color: var(--accent);
+    color: var(--accent-dark);
+    background: var(--accent-light);
+  }
+
+  .attach-badge {
+    position: absolute;
+    top: -6px; right: -6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 17px; height: 17px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .attach-badge.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .send-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-dark);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 50px;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .send-btn:hover { background: #0a3255; transform: translateY(-1px); }
+
+  .send-btn.ready {
+    background: var(--success);
+  }
+
+  .send-btn.ready:hover { background: #30a66b; }
+
+  /* ── POPUP FICHIERS ── */
+  .file-picker {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 16px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(6,29,51,0.15);
+    width: 260px;
+    overflow: hidden;
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+    pointer-events: none;
+    transition: all 0.22s cubic-bezier(.34,1.2,.64,1);
+  }
+
+  .file-picker.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .picker-title {
+    padding: 11px 14px 9px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .picker-file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+  }
+  .picker-file:last-child { border-bottom: none; }
+  .picker-file:hover { background: var(--accent-light); }
+
+  .picker-file-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .icon-pdf { background: #fff0f0; }
+  .icon-jpg { background: #f0f8ff; }
+  .icon-doc { background: #f0f4ff; }
+
+  .picker-file-info { flex: 1; min-width: 0; }
+  .picker-file-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .picker-file-size {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ── OVERLAY SUCCÈS ── */
+  .success-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border-radius: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    z-index: 200;
+  }
+
+  .success-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .success-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 20px rgba(61,186,122,0.35);
+    transform: scale(0);
+    transition: transform 0.4s cubic-bezier(.34,1.56,.64,1) 0.1s;
+  }
+
+  .success-overlay.visible .success-icon {
+    transform: scale(1);
+  }
+
+  .success-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .success-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .success-reset {
+    margin-top: 6px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .success-reset:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+  /* ── MESSAGE D'ERREUR ── */
+  .error-hint {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 16px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: all 0.2s;
+  }
+
+  .error-hint::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 28px;
+    border: 5px solid transparent;
+    border-top-color: var(--danger);
+  }
+
+  .error-hint.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="mail-window">
+
+  <!-- Barre titre -->
+  <div class="mail-header">
+    <span class="mail-header-title">✉️ Nouveau message - Essayez d'ajouter une pièce jointe !</span>
+    <div style="color:rgba(255,255,255,0.45);font-size:1rem;cursor:default;line-height:1;">✕</div>
+  </div>
+
+  <!-- Champs -->
+  <div class="mail-fields">
+    <div class="mail-field">
+      <span class="field-label">À</span>
+      <span class="field-chip">conseiller@castelnau.fr</span>
+    </div>
+    <div class="mail-field">
+      <span class="field-label">Objet</span>
+      <span class="field-value">Mon document</span>
+    </div>
+  </div>
+
+  <!-- Corps -->
+  <div class="mail-body">
+    <div class="mail-text">
+      Bonjour,<br><br>
+      Veuillez trouver ci-joint le document demandé.<br><br>
+      Cordialement
+    </div>
+
+    <!-- Tag pièce jointe -->
+    <div class="attachment-zone">
+      <div class="attachment-tag" id="attachTag">
+        <span class="tag-icon" id="tagIcon">📄</span>
+        <span id="tagName">—</span>
+        <button class="tag-remove" id="tagRemove" title="Retirer">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre outils -->
+  <div class="mail-toolbar" id="toolbar">
+
+    <!-- Popup fichiers -->
+    <div class="file-picker" id="filePicker">
+      <div class="picker-title">Choisir un fichier</div>
+      <div class="picker-file" data-name="facture_electricite.pdf" data-icon="📄" data-type="icon-pdf">
+        <div class="picker-file-icon icon-pdf">📄</div>
+        <div class="picker-file-info">
+          <div class="picker-file-name">facture_electricite.pdf</div>
+          <div class="picker-file-size">156 Ko · PDF</div>
+        </div>
+      </div>
+      <div class="picker-file" data-name="photo_vacances.jpg" data-icon="🖼️" data-type="icon-jpg">
+        <div class="picker-file-icon icon-jpg">🖼️</div>
+        <div class="picker-file-info">
+          <div class="picker-file-name">photo_vacances.jpg</div>
+          <div class="picker-file-size">2,4 Mo · Image</div>
+        </div>
+      </div>
+      <div class="picker-file" data-name="carte_identite.pdf" data-icon="🪪" data-type="icon-pdf">
+        <div class="picker-file-icon icon-pdf">🪪</div>
+        <div class="picker-file-info">
+          <div class="picker-file-name">carte_identite.pdf</div>
+          <div class="picker-file-size">88 Ko · PDF</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erreur -->
+    <div class="error-hint" id="errorHint">📎 Ajoutez d'abord un fichier !</div>
+
+    <div class="toolbar-left">
+      <button class="attach-btn" id="attachBtn">
+        📎 Joindre un fichier
+        <span class="attach-badge" id="attachBadge">1</span>
+      </button>
+    </div>
+
+    <button class="send-btn" id="sendBtn">
+      Envoyer ➤
+    </button>
+  </div>
+
+  <!-- Overlay succès -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-icon">✓</div>
+    <div class="success-text">Message envoyé !</div>
+    <div class="success-sub">Votre pièce jointe a bien été transmise.</div>
+    <button class="success-reset" id="resetBtn">↩ Recommencer</button>
+  </div>
+
+</div>
+
+<script>
+  const attachBtn = document.getElementById('attachBtn');
+  const filePicker = document.getElementById('filePicker');
+  const attachTag = document.getElementById('attachTag');
+  const tagName = document.getElementById('tagName');
+  const tagIcon = document.getElementById('tagIcon');
+  const tagRemove = document.getElementById('tagRemove');
+  const attachBadge = document.getElementById('attachBadge');
+  const sendBtn = document.getElementById('sendBtn');
+  const successOverlay = document.getElementById('successOverlay');
+  const resetBtn = document.getElementById('resetBtn');
+  const errorHint = document.getElementById('errorHint');
+
+  let attached = false;
+  let errorTimer = null;
+
+  // Ouvrir/fermer la popup
+  attachBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    filePicker.classList.toggle('open');
+  });
+
+  // Fermer en cliquant ailleurs
+  document.addEventListener('click', () => {
+    filePicker.classList.remove('open');
+  });
+
+  filePicker.addEventListener('click', (e) => e.stopPropagation());
+
+  // Choisir un fichier
+  document.querySelectorAll('.picker-file').forEach(el => {
+    el.addEventListener('click', () => {
+      const name = el.dataset.name;
+      const icon = el.dataset.icon;
+
+      tagName.textContent = name;
+      tagIcon.textContent = icon;
+      attachTag.classList.add('visible');
+      attachBadge.classList.add('visible');
+      attachBtn.classList.add('has-file');
+      sendBtn.classList.add('ready');
+      attached = true;
+
+      filePicker.classList.remove('open');
+    });
+  });
+
+  // Retirer la pièce jointe
+  tagRemove.addEventListener('click', (e) => {
+    e.stopPropagation();
+    attachTag.classList.remove('visible');
+    attachBadge.classList.remove('visible');
+    attachBtn.classList.remove('has-file');
+    sendBtn.classList.remove('ready');
+    attached = false;
+  });
+
+  // Envoyer
+  sendBtn.addEventListener('click', () => {
+    if (!attached) {
+      // Erreur : pas de pièce jointe
+      errorHint.classList.add('visible');
+      clearTimeout(errorTimer);
+      errorTimer = setTimeout(() => errorHint.classList.remove('visible'), 2500);
+      sendBtn.style.background = '#e05252';
+      setTimeout(() => sendBtn.style.background = '', 600);
+      return;
+    }
+    successOverlay.classList.add('visible');
+  });
+
+  // Reset
+  resetBtn.addEventListener('click', () => {
+    successOverlay.classList.remove('visible');
+    attachTag.classList.remove('visible');
+    attachBadge.classList.remove('visible');
+    attachBtn.classList.remove('has-file');
+    sendBtn.classList.remove('ready');
+    attached = false;
+  });
+</script>
+</body>
+</html>

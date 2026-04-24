@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPTCHA – Case à cocher</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f6f9; --surface: #ffffff; --border: #dde3ec;
+    --text: #1a2840; --text-muted: #7b8ba4;
+    --accent: #60b2c8; --accent-dark: #061d33;
+    --success: #3dba7a;
+  }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    display: flex; align-items: stretch;
+  }
+  .window {
+    width: 100%; background: var(--surface);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .win-header {
+    background: var(--accent-dark);
+    padding: 13px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .win-header-title { font-size: 0.88rem; font-weight: 600; color: #fff; letter-spacing: 0.01em; }
+  .win-close { color: rgba(255,255,255,0.45); font-size: 1rem; cursor: default; }
+
+  .body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 18px; padding: 24px;
+  }
+
+  /* reCAPTCHA box */
+  .recaptcha-box {
+    background: #f9f9f9;
+    border: 1px solid #d3d3d3;
+    border-radius: 4px;
+    width: 100%; max-width: 300px;
+    padding: 18px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow 0.2s;
+  }
+  .recaptcha-box:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+
+  .rc-left { display: flex; align-items: center; gap: 16px; }
+
+  .rc-checkbox {
+    width: 24px; height: 24px;
+    border: 2px solid #c1c1c1;
+    border-radius: 3px;
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .rc-checkbox.hide { display: none; }
+  .rc-checkbox.checked { background: #4a90d9; border-color: #4a90d9; }
+  .rc-checkmark { display: none; color: white; font-size: 0.85rem; font-weight: 700; }
+  .rc-checkbox.checked .rc-checkmark { display: block; }
+
+  .rc-spinner {
+    display: none; width: 24px; height: 24px;
+    border: 3px solid #e0e0e0; border-top-color: #4a90d9;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  .rc-spinner.show { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .rc-label { font-size: 0.9rem; color: #333; }
+
+  .rc-logo { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .rc-logo-icon { font-size: 1.5rem; }
+  .rc-logo-text { font-size: 0.48rem; color: #999; text-align: center; line-height: 1.4; }
+
+  /* Succès */
+  .rc-success { display: none; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .rc-success.show { display: flex; }
+  .rc-success-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: white;
+    box-shadow: 0 4px 18px rgba(61,186,122,0.35);
+    animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .rc-success-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+  .rc-success-sub   { font-size: 0.75rem; color: var(--text-muted); }
+  .rc-retry {
+    margin-top: 4px; background: none;
+    border: 1.5px solid var(--border); color: var(--text-muted);
+    padding: 7px 20px; border-radius: 50px;
+    font-size: 0.73rem; font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .rc-retry:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hint { font-size: 0.72rem; color: var(--text-muted); text-align: center; max-width: 260px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="win-header">
+    <span class="win-header-title">☑️ Je ne suis pas un robot</span>
+    <span class="win-close">✕</span>
+  </div>
+  <div class="body">
+
+    <div class="recaptcha-box" id="rcBox" onclick="handleCheckbox()">
+      <div class="rc-left">
+        <div class="rc-checkbox" id="rcCheck"><span class="rc-checkmark">✓</span></div>
+        <div class="rc-spinner" id="rcSpinner"></div>
+        <span class="rc-label">Je ne suis pas un robot</span>
+      </div>
+      <div class="rc-logo">
+        <span class="rc-logo-icon">🔒</span>
+        <span class="rc-logo-text">reCAPTCHA<br>Confidentialité · Conditions</span>
+      </div>
+    </div>
+
+    <div class="rc-success" id="rcSuccess">
+      <div class="rc-success-icon">✓</div>
+      <div class="rc-success-title">Vous êtes bien humain !</div>
+      <div class="rc-success-sub">L'accès au site a été accordé.</div>
+      <button class="rc-retry" onclick="resetCheckbox()">↩ Réessayer</button>
+    </div>
+
+    <p class="hint">Cliquez sur la case pour prouver que vous n'êtes pas un robot.</p>
+  </div>
+</div>
+<script>
+let done = false;
+function handleCheckbox() {
+  if (done) return;
+  done = true;
+  document.getElementById('rcCheck').classList.add('hide');
+  document.getElementById('rcSpinner').classList.add('show');
+  setTimeout(() => {
+    document.getElementById('rcBox').style.display = 'none';
+    document.getElementById('rcSpinner').classList.remove('show');
+    document.getElementById('rcSuccess').classList.add('show');
+  }, 1200);
+}
+function resetCheckbox() {
+  done = false;
+  document.getElementById('rcBox').style.display = '';
+  document.getElementById('rcCheck').classList.remove('hide','checked');
+  document.getElementById('rcSpinner').classList.remove('show');
+  document.getElementById('rcSuccess').classList.remove('show');
+}
+</script>
+</body>
+</html>

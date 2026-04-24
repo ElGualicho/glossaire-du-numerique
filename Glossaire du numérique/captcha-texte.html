@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPTCHA – Texte déformé</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f6f9; --surface: #ffffff; --border: #dde3ec;
+    --text: #1a2840; --text-muted: #7b8ba4;
+    --accent: #60b2c8; --accent-dark: #061d33;
+    --success: #3dba7a; --danger: #e05252;
+  }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    display: flex; align-items: stretch;
+  }
+  .window {
+    width: 100%; background: var(--surface);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .win-header {
+    background: var(--accent-dark); padding: 13px 18px;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .win-header-title { font-size: 0.88rem; font-weight: 600; color: #fff; }
+  .win-close { color: rgba(255,255,255,0.45); font-size: 1rem; cursor: default; }
+
+  .body {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; padding: 22px;
+  }
+
+  .card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 20px 18px;
+    width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .card-title {
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+  }
+
+  .canvas-wrap {
+    position: relative; border-radius: 10px; overflow: hidden;
+    background: #1a2840; height: 76px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .refresh-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    font-size: 1rem; width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.2s, transform 0.3s;
+  }
+  .refresh-btn:hover { background: rgba(255,255,255,0.28); transform: rotate(90deg); }
+
+  .input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+  .cap-input {
+  flex: none;
+  width: 180px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  letter-spacing: 0.1em;
+}
+  .cap-input:focus { border-color: var(--accent); }
+  .cap-input.ok    { border-color: var(--success); background: rgba(61,186,122,0.05); }
+  .cap-input.error { border-color: var(--danger);  background: rgba(224,82,82,0.05); }
+
+  .submit-btn {
+    background: var(--accent-dark); color: white; border: none;
+    padding: 10px 16px; border-radius: 10px;
+    font-size: 0.8rem; font-weight: 600; font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: background 0.2s; white-space: nowrap;
+  }
+  .submit-btn:hover { background: #0a2d4d; }
+
+  .feedback {
+    font-size: 0.73rem; font-weight: 600; min-height: 18px; transition: color 0.2s;
+  }
+  .feedback.ok    { color: var(--success); }
+  .feedback.error { color: var(--danger); }
+
+  .hint { font-size: 0.72rem; color: var(--text-muted); text-align: center; max-width: 260px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="win-header">
+    <span class="win-header-title">🔤 Recopiez le texte</span>
+    <span class="win-close">✕</span>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="card-title">Recopiez le texte ci-dessous</div>
+      <div class="canvas-wrap">
+        <canvas id="cap" width="284" height="76"></canvas>
+        <button class="refresh-btn" onclick="newCaptcha()" title="Nouveau code">↻</button>
+      </div>
+      <div class="input-row">
+        <input class="cap-input" id="capInput" type="text"
+               placeholder="Saisir le texte…" autocomplete="off" spellcheck="false"
+               oninput="resetFeedback()">
+        <button class="submit-btn" onclick="checkCaptcha()">Valider</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <p class="hint">Les majuscules et minuscules ne sont pas différenciées.</p>
+  </div>
+</div>
+<script>
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+let code = '';
+
+function rnd(min, max) { return min + Math.random() * (max - min); }
+
+function newCaptcha() {
+  code = Array.from({ length: 6 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+  const canvas = document.getElementById('cap');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Fond
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#0f2744'); g.addColorStop(0.5, '#1a3a5c'); g.addColorStop(1, '#0a1e35');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  // Lignes de bruit
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(rnd(0, W), rnd(0, H));
+    ctx.bezierCurveTo(rnd(0,W), rnd(0,H), rnd(0,W), rnd(0,H), rnd(0,W), rnd(0,H));
+    ctx.strokeStyle = `rgba(96,178,200,${rnd(0.1, 0.3)})`;
+    ctx.lineWidth = rnd(0.5, 1.5); ctx.stroke();
+  }
+
+  // Points
+  for (let i = 0; i < 80; i++) {
+    ctx.beginPath();
+    ctx.arc(rnd(0,W), rnd(0,H), rnd(0.3, 1.8), 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${rnd(0.05, 0.25)})`; ctx.fill();
+  }
+
+  // Lettres
+  const fonts = ['Georgia', 'Times New Roman', 'Courier New', 'Arial Black', 'Impact'];
+  const colors = ['#60b2c8','#a8d8e8','#ffffff','#7ec8d8','#c8e8f0','#f0e060'];
+  const spacing = (W - 48) / code.length;
+
+  code.split('').forEach((c, i) => {
+    ctx.save();
+    const x = 26 + i * spacing + spacing / 2;
+    const y = H / 2 + 8;
+    ctx.translate(x, y);
+    ctx.rotate(rnd(-0.45, 0.45));
+    ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.font = `bold ${Math.floor(rnd(24, 34))}px ${fonts[Math.floor(Math.random() * fonts.length)]}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(c, 0, 0);
+    ctx.restore();
+  });
+}
+
+function checkCaptcha() {
+  const val = document.getElementById('capInput').value.trim().toUpperCase();
+  const fb  = document.getElementById('feedback');
+  const inp = document.getElementById('capInput');
+  if (!val) { fb.textContent = 'Veuillez saisir le texte affiché.'; fb.className = 'feedback error'; return; }
+  if (val === code) {
+    inp.className = 'cap-input ok';
+    fb.textContent = '✓ Correct ! Vous avez réussi le CAPTCHA.'; fb.className = 'feedback ok';
+    setTimeout(newCaptcha, 2200);
+    setTimeout(() => { inp.className='cap-input'; fb.textContent=''; fb.className='feedback'; inp.value=''; }, 2200);
+  } else {
+    inp.className = 'cap-input error';
+    fb.textContent = '✕ Texte incorrect — réessayez.'; fb.className = 'feedback error';
+    setTimeout(() => { newCaptcha(); inp.value=''; inp.className='cap-input'; fb.textContent=''; fb.className='feedback'; }, 1400);
+  }
+}
+
+function resetFeedback() {
+  document.getElementById('capInput').className = 'cap-input';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkCaptcha();
+});
+
+newCaptcha();
+</script>
+</body>
+</html>

@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Souris</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #061d33;
+  --accent: #60b2c8;
+  --accent-dim: rgba(96,178,200,0.18);
+  --white: #ffffff;
+  --muted: rgba(255,255,255,0.42);
+  --surface: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.1);
+  --success: #3dba7a;
+}
+
+html, body {
+  width: 100%; height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--white);
+}
+
+/* ═══════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════ */
+.layout {
+  width: 100%; height: 100vh;
+  display: grid;
+  grid-template-columns: 44% 56%;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════
+   LEFT PANEL — Mouse visualization
+═══════════════════════════════════════ */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 24px 40px;
+  border-right: 1px solid var(--border);
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+.panel-eyebrow {
+  font-size: 2rem;
+  font-weight: 800;
+  padding-top: 30px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #ffffff;
+}
+
+.mouse-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.mouse-svg {
+  height: clamp(276px, 64vh, 483px);
+  width: auto;
+  overflow: visible;
+  filter: drop-shadow(0 24px 48px rgba(0,0,0,0.5));
+}
+
+/* Action indicator bar below mouse */
+.action-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.action-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all 0.15s;
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.action-pill .pip {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.action-pill.lit {
+  color: var(--accent);
+  border-color: rgba(96,178,200,0.35);
+  background: var(--accent-dim);
+}
+
+.action-pill.lit .pip {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* ═══════════════════════════════════════
+   RIGHT PANEL — Challenges
+═══════════════════════════════════════ */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 44px 24px 36px;
+  gap: 16px;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Progress */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+/* Progress dots — clickable */
+.progress-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s cubic-bezier(.34,1.4,.64,1);
+  cursor: pointer;
+}
+
+.progress-dot:hover {
+  transform: scale(1.4);
+  background: rgba(255,255,255,0.4);
+}
+
+.progress-dot.done {
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.progress-dot.current {
+  background: var(--white);
+  transform: scale(1.5);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+  cursor: default;
+}
+
+/* Move gauge (challenge 1) */
+.move-gauge-wrap {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+  z-index: 10;
+  width: 160px;
+}
+
+.move-gauge-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.move-gauge-track {
+  width: 160px;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.move-gauge-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), #3dba7a);
+  border-radius: 99px;
+  transition: width 0.1s linear;
+}
+
+/* Context menu — cursor stays visible on top */
+.ctx-menu { z-index: 25; }
+.custom-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.2s;
+  transform: translate(-3px, -2px);
+  will-change: transform;
+}
+
+/* Inline bravo (challenge 5) */
+.inline-bravo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  width: 160px;
+}
+
+.inline-bravo-emoji { font-size: 2.2rem; }
+.inline-bravo-title {
+  font-size: 1.3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: var(--white);
+}
+.inline-bravo-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Challenge card */
+.challenge-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 24px;
+  flex-shrink: 0;
+  transition: border-color 0.3s;
+}
+
+.challenge-card.active {
+  border-color: rgba(96,178,200,0.3);
+}
+
+.challenge-step {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.challenge-title {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.challenge-sub {
+  font-size: clamp(0.78rem, 1vw, 0.88rem);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Practice zone */
+.practice-zone {
+  flex: 1;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  cursor: none;
+  min-height: 0;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.practice-zone.ready {
+  border-color: rgba(96,178,200,0.3);
+  background: rgba(96,178,200,0.025);
+}
+
+
+.custom-cursor.show { opacity: 1; }
+
+.custom-cursor svg {
+  width: 26px; height: 26px;
+  display: block;
+  filter: drop-shadow(0 0 5px rgba(96,178,200,0.9)) drop-shadow(1px 2px 6px rgba(0,0,0,0.7));
+}
+
+/* Click ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(96,178,200,0.25);
+  pointer-events: none;
+  width: 6px; height: 6px;
+  transform: translate(-50%,-50%);
+  animation: rippleAnim 0.55s ease-out forwards;
+}
+
+@keyframes rippleAnim {
+  to { width: 70px; height: 70px; opacity: 0; }
+}
+
+/* Movement trail */
+.trail-dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  transform: translate(-50%,-50%);
+  animation: trailFade 0.7s ease-out forwards;
+}
+
+@keyframes trailFade {
+  0% { opacity: 0.5; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(0.2); }
+}
+
+/* Challenge UI content (centered in zone) */
+.zone-ui {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Target button (challenge 2) */
+.target-btn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 50px;
+  padding: 15px 36px;
+  font-size: clamp(0.9rem, 1.4vw, 1.05rem);
+  font-weight: 700;
+  cursor: none;
+  pointer-events: auto;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 24px rgba(96,178,200,0.35);
+  transition: transform 0.1s, box-shadow 0.1s;
+  user-select: none;
+}
+
+.target-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 10px rgba(96,178,200,0.2);
+}
+
+/* Context menu (challenge 3) */
+.ctx-menu {
+  position: absolute;
+  background: rgba(255,255,255,0.97);
+  border-radius: 10px;
+  padding: 5px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.28);
+  min-width: 170px;
+  z-index: 30;
+  display: none;
+}
+
+.ctx-menu.show { display: block; }
+
+.ctx-item {
+  padding: 9px 13px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #1a2840;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.ctx-item:hover { background: rgba(96,178,200,0.12); }
+.ctx-sep { height: 1px; background: rgba(0,0,0,0.07); margin: 4px 0; }
+
+/* Scroll content (challenge 4) */
+.scroll-doc {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-inner {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  will-change: transform;
+}
+
+.doc-line {
+  height: 9px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.07);
+}
+
+.doc-line.title {
+  height: 13px;
+  width: 55%;
+  background: rgba(255,255,255,0.16);
+  margin-bottom: 6px;
+}
+
+.scroll-hint-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  animation: arrowBounce 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(-50%); opacity: 0.35; }
+  50% { transform: translateY(calc(-50% + 9px)); opacity: 0.6; }
+}
+
+.scroll-hint-arrow span {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+/* Double click target (challenge 5) */
+.dblclick-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: none;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.file-icon-wrap {
+  width: 64px; height: 72px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.dblclick-target:hover .file-icon-wrap {
+  background: var(--accent-dim);
+  border-color: rgba(96,178,200,0.5);
+}
+
+.dblclick-target:active .file-icon-wrap {
+  transform: scale(0.93);
+}
+
+.file-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Zone hint text */
+.zone-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Validation flash */
+.val-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(61,186,122,0.07);
+  border: 1.5px solid rgba(61,186,122,0.4);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+  transition: opacity 0.15s;
+}
+
+.val-flash.show { opacity: 1; }
+
+.val-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--success);
+  color: white;
+  font-size: 1.6rem;
+  display: flex; align-items: center; justify-content: center;
+  transform: scale(0);
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 4px 20px rgba(61,186,122,0.4);
+}
+
+.val-flash.show .val-icon { transform: scale(1); }
+
+/* Scroll bravo overlay (challenge 4) */
+.scroll-bravo {
+  position: absolute;
+  inset: 0;
+  background: rgba(6,29,51,0.92);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 35;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.scroll-bravo.show { opacity: 1; pointer-events: auto; }
+.scroll-bravo-emoji { font-size: 2.4rem; }
+.scroll-bravo-text {
+  font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.4;
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═════════════════════════════
+       LEFT — Mouse SVG
+  ═════════════════════════════ -->
+  <div class="left-panel">
+    <span class="panel-eyebrow">VOTRE SOURIS EN TEMPS RÉEL</span>
+
+    <div class="mouse-wrap">
+      <!--
+        viewBox: "-82 -15 324 320"
+        Mouse body: x=0..160, y=50..280
+        Left label zone: x=-82..-5
+        Right label zone: x=165..242
+      -->
+      <svg class="mouse-svg" viewBox="-82 -15 324 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Clip to mouse body (top button section) -->
+          <clipPath id="btnClip">
+            <path d="M22,78 Q22,52 80,52 Q138,52 138,78 L138,148 Q100,158 80,158 Q60,158 22,148 Z"/>
+          </clipPath>
+
+          <!-- Glow filters -->
+          <filter id="glowBlue" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- ── CABLE ── -->
+        <path d="M80,0 Q80,30 80,52"
+              stroke="rgba(255,255,255,0.45)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M80,0 Q80,30 80,52"
+              stroke="rgba(255,255,255,0.15)" stroke-width="12" fill="none" stroke-linecap="round"/>
+
+        <!-- ── BODY SHADOW ── -->
+        <path d="M22,82 Q22,52 80,52 Q138,52 138,82 L138,215 Q138,272 80,272 Q22,272 22,215 Z"
+              fill="rgba(0,0,0,0.25)" transform="translate(4,6)"/>
+
+        <!-- ── BODY ── -->
+        <path d="M22,82 Q22,52 80,52 Q138,52 138,82 L138,215 Q138,272 80,272 Q22,272 22,215 Z"
+              fill="#1e5a8a" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+
+        <!-- ── LEFT BUTTON ── -->
+        <rect id="svgLeftBtn"
+              x="22" y="52" width="58" height="106"
+              clip-path="url(#btnClip)"
+              fill="rgba(255,255,255,0.08)"
+              style="transition: fill 0.08s;"/>
+
+        <!-- ── RIGHT BUTTON ── -->
+        <rect id="svgRightBtn"
+              x="80" y="52" width="58" height="106"
+              clip-path="url(#btnClip)"
+              fill="rgba(255,255,255,0.08)"
+              style="transition: fill 0.08s;"/>
+
+        <!-- Button separator vertical -->
+        <line x1="80" y1="52" x2="80" y2="158"
+              stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+
+        <!-- Button separator horizontal -->
+        <path d="M22,148 Q60,160 80,160 Q100,160 138,148"
+              stroke="rgba(255,255,255,0.22)" stroke-width="1.5" fill="none"/>
+
+        <!-- ── SCROLL WHEEL TRACK ── -->
+        <rect x="67" y="70" width="26" height="62" rx="13"
+              fill="rgba(0,0,0,0.4)"/>
+
+        <!-- ── SCROLL WHEEL ── -->
+        <rect id="svgWheel"
+              x="69" y="72" width="22" height="58" rx="11"
+              fill="rgba(255,255,255,0.18)"
+              stroke="rgba(255,255,255,0.35)" stroke-width="1"
+              style="transition: fill 0.08s, stroke 0.08s;"/>
+
+        <!-- Wheel grip lines -->
+        <g id="svgWheelLines" opacity="0.55">
+          <line x1="72" y1="88"  x2="88" y2="88"  stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="72" y1="96"  x2="88" y2="96"  stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="72" y1="104" x2="88" y2="104" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="72" y1="112" x2="88" y2="112" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </g>
+
+        <!-- ═══════════════════════════
+             LABELS (inline SVG)
+        ═══════════════════════════ -->
+
+        <!-- LEFT label -->
+        <g id="labelLeft">
+          <line x1="22" y1="98" x2="-28" y2="98"
+                stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3 3"/>
+          <circle cx="-30" cy="98" r="2.5" fill="rgba(255,255,255,0.2)"/>
+          <text x="-36" y="93" text-anchor="end"
+                font-family="Inter,sans-serif" font-size="11.5" font-weight="500"
+                fill="rgba(255,255,255,0.4)">Clic</text>
+          <text x="-36" y="107" text-anchor="end"
+                font-family="Inter,sans-serif" font-size="11.5" font-weight="500"
+                fill="rgba(255,255,255,0.4)">gauche</text>
+        </g>
+
+        <!-- RIGHT label -->
+        <g id="labelRight">
+          <line x1="138" y1="98" x2="188" y2="98"
+                stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3 3"/>
+          <circle cx="190" cy="98" r="2.5" fill="rgba(255,255,255,0.2)"/>
+          <text x="196" y="93" text-anchor="start"
+                font-family="Inter,sans-serif" font-size="11.5" font-weight="500"
+                fill="rgba(255,255,255,0.4)">Clic</text>
+          <text x="196" y="107" text-anchor="start"
+                font-family="Inter,sans-serif" font-size="11.5" font-weight="500"
+                fill="rgba(255,255,255,0.4)">droit</text>
+        </g>
+
+        <!-- WHEEL label -->
+        <g id="labelWheel">
+          <line x1="138" y1="112" x2="188" y2="120"
+                stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3 3"/>
+          <circle cx="190" cy="120" r="2.5" fill="rgba(255,255,255,0.2)"/>
+          <text x="196" y="124" text-anchor="start"
+                font-family="Inter,sans-serif" font-size="11.5" font-weight="500"
+                fill="rgba(255,255,255,0.4)">Molette</text>
+        </g>
+
+      </svg>
+    </div>
+
+    <!-- Action pills -->
+    <div class="action-bar">
+      <div class="action-pill" id="pillLeft">
+        <div class="pip"></div> Clic gauche
+      </div>
+      <div class="action-pill" id="pillRight">
+        <div class="pip"></div> Clic droit
+      </div>
+      <div class="action-pill" id="pillWheel">
+        <div class="pip"></div> Molette
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════
+       RIGHT — Challenges
+  ═════════════════════════════ -->
+  <div class="right-panel">
+
+    <!-- Challenge description -->
+    <div class="challenge-card" id="challengeCard">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div class="progress-wrap" style="margin:0;">
+          <div class="progress-dot current" data-i="0"></div>
+          <div class="progress-dot" data-i="1"></div>
+          <div class="progress-dot" data-i="2"></div>
+          <div class="progress-dot" data-i="3"></div>
+          <div class="progress-dot" data-i="4"></div>
+        </div>
+        <span class="challenge-step" id="cStep" style="margin:0;">Défi 1 / 5</span>
+      </div>
+      <h2 class="challenge-title" id="cTitle">Bougez votre souris</h2>
+      <p class="challenge-sub" id="cSub">Déplacez votre souris dans la zone ci-dessous. La souris à gauche réagit en temps réel.</p>
+    </div>
+
+    <!-- Practice zone -->
+    <div class="practice-zone" id="practiceZone">
+
+      <!-- Custom cursor -->
+      <div class="custom-cursor" id="customCursor">
+        <svg viewBox="0 0 26 32" xmlns="http://www.w3.org/2000/svg">
+          <!-- Blue outer outline for visibility on light backgrounds -->
+          <path d="M3,3 L3,23 L9,17 L13,27 L16,26 L12,16 L20,16 Z"
+                fill="none" stroke="#60b2c8" stroke-width="4"
+                stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- White fill with dark inner stroke -->
+          <path d="M3,3 L3,23 L9,17 L13,27 L16,26 L12,16 L20,16 Z"
+                fill="white" stroke="#1a3a5c" stroke-width="1.5"
+                stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- Zone content -->
+      <div class="zone-ui" id="zoneUI"></div>
+
+      <!-- Hint -->
+      <div class="zone-hint" id="zoneHint">Déplacez votre souris dans cette zone</div>
+
+      <!-- Context menu -->
+      <div class="ctx-menu" id="ctxMenu">
+        <div class="ctx-item">📋 Copier</div>
+        <div class="ctx-item">✂️ Couper</div>
+        <div class="ctx-item">📄 Coller</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item">🔎 Rechercher</div>
+      </div>
+
+      <!-- Validation flash -->
+      <div class="val-flash" id="valFlash">
+        <div class="val-icon">✓</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ─── CHALLENGES ────────────────────────────────────────────────────────────────
+const CHALLENGES = [
+  {
+    step: 'Défi 1 / 5', title: 'Bougez votre souris',
+    sub: 'Déplacez votre souris dans la zone ci-dessous. Regardez la souris à gauche réagir en temps réel.',
+    hint: 'Bougez votre souris ici',
+    ui: 'move', trigger: 'move'
+  },
+  {
+    step: 'Défi 2 / 5', title: 'Faites un clic gauche',
+    sub: 'Cliquez sur le bouton bleu avec le bouton gauche de votre souris.',
+    hint: '', ui: 'button', trigger: 'click-target'
+  },
+  {
+    step: 'Défi 3 / 5', title: 'Faites un clic droit',
+    sub: 'Appuyez sur le bouton droit de votre souris n\'importe où dans la zone.',
+    hint: 'Clic droit n\'importe où ici',
+    ui: 'rightclick', trigger: 'rightclick'
+  },
+  {
+    step: 'Défi 4 / 5', title: 'Utilisez la molette',
+    sub: 'Faites tourner la molette de votre souris pour faire défiler le document.',
+    hint: '', ui: 'scroll', trigger: 'scroll'
+  },
+  {
+    step: 'Défi 5 / 5', title: 'Double-cliquez !',
+    sub: 'Cliquez deux fois rapidement sur le fichier ci-dessous pour l\'ouvrir.',
+    hint: '', ui: 'dblclick', trigger: 'dblclick-target'
+  }
+];
+
+let validateTimer1 = null;
+let validateTimer2 = null;
+let idx = 0;
+let maxReached = 0;
+let done = false;
+let moveDist = 0;
+let lastPos = null;
+let scrollY = 0;
+let wheelTimer = null;
+let moveStartTime = null;
+let moveActive = false;
+
+// ─── ELEMENTS ──────────────────────────────────────────────────────────────────
+const zone        = document.getElementById('practiceZone');
+const cursor      = document.getElementById('customCursor');
+const zoneUI      = document.getElementById('zoneUI');
+const zoneHint    = document.getElementById('zoneHint');
+const valFlash    = document.getElementById('valFlash');
+const ctxMenu     = document.getElementById('ctxMenu');
+
+// SVG mouse parts
+const svgL = document.getElementById('svgLeftBtn');
+const svgR = document.getElementById('svgRightBtn');
+const svgW = document.getElementById('svgWheel');
+const svgWL= document.getElementById('svgWheelLines');
+
+// Labels
+const lblL = document.getElementById('labelLeft');
+const lblR = document.getElementById('labelRight');
+const lblW = document.getElementById('labelWheel');
+
+// Pills
+const pillL = document.getElementById('pillLeft');
+const pillR = document.getElementById('pillRight');
+const pillW = document.getElementById('pillWheel');
+
+// ─── MOUSE SVG REACTIONS ───────────────────────────────────────────────────────
+function lightLeft(on) {
+  svgL.style.fill = on ? 'rgba(96,178,200,0.32)' : 'rgba(255,255,255,0.03)';
+  pillL.classList.toggle('lit', on);
+  setLabelColor(lblL, on);
+}
+
+function lightRight(on) {
+  svgR.style.fill = on ? 'rgba(96,178,200,0.32)' : 'rgba(255,255,255,0.03)';
+  pillR.classList.toggle('lit', on);
+  setLabelColor(lblR, on);
+}
+
+function lightWheel(on) {
+  svgW.style.fill = on ? 'rgba(96,178,200,0.38)' : 'rgba(255,255,255,0.07)';
+  svgW.style.stroke = on ? '#60b2c8' : 'rgba(255,255,255,0.14)';
+  svgWL.style.opacity = on ? '0.7' : '0.28';
+  pillW.classList.toggle('lit', on);
+  setLabelColor(lblW, on);
+}
+
+function setLabelColor(group, on) {
+  const texts = group.querySelectorAll('text');
+  const lines = group.querySelectorAll('line');
+  const circles = group.querySelectorAll('circle');
+  const color = on ? '#60b2c8' : 'rgba(255,255,255,0.4)';
+  const lcolor = on ? 'rgba(96,178,200,0.6)' : 'rgba(255,255,255,0.2)';
+  texts.forEach(t => t.setAttribute('fill', color));
+  lines.forEach(l => l.setAttribute('stroke', lcolor));
+  circles.forEach(c => c.setAttribute('fill', lcolor));
+}
+
+document.addEventListener('mousedown', e => {
+  if (e.button === 0) lightLeft(true);
+  if (e.button === 2) lightRight(true);
+});
+
+document.addEventListener('mouseup', e => {
+  if (e.button === 0) lightLeft(false);
+  if (e.button === 2) lightRight(false);
+});
+
+document.addEventListener('wheel', () => {
+  lightWheel(true);
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => lightWheel(false), 350);
+});
+
+// ─── CUSTOM CURSOR ─────────────────────────────────────────────────────────────
+zone.addEventListener('mousemove', e => {
+  const r = zone.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+
+  cursor.style.left = x + 'px';
+  cursor.style.top  = y + 'px';
+  cursor.classList.add('show');
+
+  if (idx !== 2) ctxMenu.classList.remove('show');
+
+  // Challenge 1 — track movement with time requirement + gauge
+  if (idx === 0 && !done) {
+    if (lastPos) {
+      const dx = x - lastPos.x, dy = y - lastPos.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      moveDist += dist;
+      if (Math.random() > 0.55) spawnTrail(x, y);
+      if (dist > 2) {
+        if (!moveActive) {
+          moveActive = true;
+          moveStartTime = Date.now();
+        } else {
+          const elapsed = Date.now() - moveStartTime;
+          const pct = Math.min(100, (elapsed / 2500) * 100);
+          const bar = document.getElementById('moveGaugeBar');
+          if (bar) bar.style.width = pct + '%';
+          if (elapsed >= 2500) validate();
+        }
+      }
+    }
+    lastPos = { x, y };
+  }
+});
+
+zone.addEventListener('mouseleave', () => {
+  cursor.classList.remove('show');
+  lastPos = null;
+});
+
+// ─── EFFECTS ───────────────────────────────────────────────────────────────────
+function spawnTrail(x, y) {
+  const d = document.createElement('div');
+  d.className = 'trail-dot';
+  d.style.left = x + 'px';
+  d.style.top  = y + 'px';
+  zone.appendChild(d);
+  setTimeout(() => d.remove(), 700);
+}
+
+function spawnRipple(x, y) {
+  const d = document.createElement('div');
+  d.className = 'ripple';
+  d.style.left = x + 'px';
+  d.style.top  = y + 'px';
+  zone.appendChild(d);
+  setTimeout(() => d.remove(), 600);
+}
+
+// ─── ZONE EVENTS ───────────────────────────────────────────────────────────────
+zone.addEventListener('click', e => {
+  const r = zone.getBoundingClientRect();
+  spawnRipple(e.clientX - r.left, e.clientY - r.top);
+  ctxMenu.classList.remove('show');
+});
+
+zone.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const r = zone.getBoundingClientRect();
+  const x = Math.min(e.clientX - r.left, r.width  - 185);
+  const y = Math.min(e.clientY - r.top,  r.height - 165);
+  ctxMenu.style.left = x + 'px';
+  ctxMenu.style.top  = y + 'px';
+  ctxMenu.classList.add('show');
+  if (idx === 2 && !done) validateDelayed(4000);
+});
+
+zone.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (idx === 3 && !done) {
+    const inner = document.getElementById('scrollInner');
+    if (inner) {
+      scrollY = Math.max(-900, Math.min(0, scrollY - e.deltaY * 0.55));
+      inner.style.transform = `translateY(${scrollY}px)`;
+      if (scrollY <= -820) {
+        done = true; // prevent re-triggering
+        setTimeout(() => {
+          const bravo = document.getElementById('scrollBravo');
+          if (bravo) bravo.classList.add('show');
+          setTimeout(() => validateDelayed(0, true), 2000);
+        }, 1500);
+      }
+    }
+  }
+}, { passive: false });
+
+// ─── LOAD CHALLENGE ────────────────────────────────────────────────────────────
+function load(i) {
+  clearTimeout(validateTimer1);
+  clearTimeout(validateTimer2);
+  const ch = CHALLENGES[i];
+  done = false;
+  moveDist = 0;
+  lastPos = null;
+  scrollY = 0;
+  moveActive = false;
+  moveStartTime = null;
+  ctxMenu.classList.remove('show');
+  zone.classList.remove('ready');
+
+  // Update text
+  document.getElementById('cStep').textContent  = ch.step;
+  document.getElementById('cTitle').textContent = ch.title;
+  document.getElementById('cSub').textContent   = ch.sub;
+  zoneHint.textContent    = ch.hint;
+  zoneHint.style.display  = ch.hint ? 'block' : 'none';
+
+  // Progress dots — clickable to go back
+  document.querySelectorAll('.progress-dot').forEach((d, j) => {
+    d.classList.remove('done', 'current');
+    if (j < i) d.classList.add('done');
+    else if (j === i) d.classList.add('current');
+  });
+  document.getElementById('progressLabel') && (document.getElementById('progressLabel').textContent = `Défi ${i+1} sur 5`);
+
+  // Clear zone
+  zoneUI.innerHTML = '';
+  zoneUI.style.cssText = '';
+  const oldGauge = document.getElementById('moveGaugeWrap');
+  if (oldGauge) oldGauge.remove();
+
+  // Build zone UI
+  switch (ch.ui) {
+
+    case 'move':
+      zone.classList.add('ready');
+      // Gauge
+      zoneHint.style.display = 'none';
+      const gaugeWrap = document.createElement('div');
+      gaugeWrap.className = 'move-gauge-wrap';
+      gaugeWrap.id = 'moveGaugeWrap';
+      gaugeWrap.innerHTML = `
+        <div class="move-gauge-label">Progression</div>
+        <div class="move-gauge-track"><div class="move-gauge-bar" id="moveGaugeBar"></div></div>
+      `;
+      zone.appendChild(gaugeWrap);
+      break;
+
+    case 'button': {
+      const btn = document.createElement('button');
+      btn.className = 'target-btn';
+      btn.textContent = 'Cliquez ici !';
+      btn.addEventListener('click', () => { if (!done) validate(); });
+      zoneUI.appendChild(btn);
+      break;
+    }
+
+    case 'rightclick':
+      zone.classList.add('ready');
+      break;
+
+    case 'scroll': {
+      zoneUI.style.cssText = 'position:absolute;inset:0;display:block;padding:0;';
+      const wrap = document.createElement('div');
+      wrap.className = 'scroll-doc';
+      const inner = document.createElement('div');
+      inner.className = 'scroll-inner';
+      inner.id = 'scrollInner';
+      inner.style.transition = 'transform 0.12s ease';
+
+      const content = [
+        { tag: 'h3', text: 'Introduction' },
+        { tag: 'p', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.' },
+        { tag: 'p', text: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum et dolorum fuga.' },
+        { tag: 'p', text: 'Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.' },
+        { tag: 'h3', text: 'Contexte & Enjeux' },
+        { tag: 'p', text: 'Temporibus autem quibusdam et aut officiis debitis rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis.' },
+        { tag: 'p', text: 'Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis molestie dictum semper, metus arcu lacinia eros, eget tincidunt dui turpis condimentum quam. Proin scelerisque augue sit amet risus.' },
+        { tag: 'p', text: 'Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus. Phasellus ultrices nulla.' },
+        { tag: 'h3', text: 'Développement' },
+        { tag: 'p', text: 'Quisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus. Nam nulla quam, gravida non, commodo a, sodales sit amet, nisi. Phasellus blandit leo ut odio. Nullam hendrerit justo non leo.' },
+        { tag: 'p', text: 'Sed commodo posuere pede. Mauris ut est. Ut quis purus. Sed ac odio. Sed vehicula hendrerit sem. Duis non odio. Morbi ut dui. Sed accumsan risus eget odio. In hac habitasse platea dictumst. Pellentesque non elit.' },
+        { tag: 'p', text: 'Fusce fermentum. Nullam cursus lacinia erat. Praesent blandit laoreet nibh. Fusce convallis metus id felis luctus adipiscing. Pellentesque egestas neque sit amet convallis ullamcorper, nisi nisl aliquet risus.' },
+        { tag: 'h3', text: 'Analyse des résultats' },
+        { tag: 'p', text: 'Phasellus habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer malesuada. Nunc interdum lacus sit amet orci. Vestibulum rutrum, mi nec elementum vehicula, eros quam gravida nisl.' },
+        { tag: 'p', text: 'Donec at pede. Fusce nibh. Phasellus soluta nunc velit, pharetra ut justo nec, ornare condimentum dui. Proin hendrerit tempus arcu. Fusce lobortis lorem at ipsum semper sagittis. Vivamus at massa felis.' },
+        { tag: 'h3', text: 'Conclusion' },
+        { tag: 'p', text: 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper.' },
+        { tag: 'p', text: 'Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Proin vel ante.' },
+        { tag: 'p', text: 'In dui magna, posuere eget, vestibulum et, tempor auctor, justo. In ac felis quis tortor malesuada pretium. Pellentesque auctor neque. Nulla facilisi. Phasellus nec sem in justo pellentesque facilisis.' },
+        { tag: 'fin', text: '— FIN —' },
+      ];
+
+      content.forEach(({ tag, text }) => {
+        const el = document.createElement(tag === 'fin' ? 'div' : tag);
+        el.textContent = text;
+        if (tag === 'h3') {
+          el.style.cssText = 'font-size:0.85rem;font-weight:700;color:rgba(255,255,255,0.85);margin-top:12px;margin-bottom:4px;letter-spacing:0.04em;text-transform:uppercase;';
+        } else if (tag === 'fin') {
+          el.style.cssText = 'font-size:0.75rem;font-weight:700;color:rgba(96,178,200,0.7);text-align:center;padding:18px 0 8px;letter-spacing:0.2em;text-transform:uppercase;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;';
+        } else {
+          el.style.cssText = 'font-size:0.78rem;color:rgba(255,255,255,0.5);line-height:1.65;margin-bottom:6px;';
+        }
+        inner.appendChild(el);
+      });
+
+      const arrow = document.createElement('div');
+      arrow.className = 'scroll-hint-arrow';
+      arrow.innerHTML = '<span>↕</span>';
+      wrap.appendChild(inner);
+      wrap.appendChild(arrow);
+
+      // Bravo overlay (hidden initially)
+      const scrollBravo = document.createElement('div');
+      scrollBravo.className = 'scroll-bravo';
+      scrollBravo.id = 'scrollBravo';
+      scrollBravo.innerHTML = `
+        <div class="scroll-bravo-emoji">🎉</div>
+        <div class="scroll-bravo-text">Bravo, vous avez fait défiler l'ensemble du texte !</div>
+      `;
+      wrap.appendChild(scrollBravo);
+
+      zoneUI.appendChild(wrap);
+      break;
+    }
+
+    case 'dblclick': {
+      zoneUI.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:32px;';
+
+      const files = [
+        { icon: '🐱', label: 'photo_chat.jpg',  imgUrl: 'https://cataas.com/cat?width=400&height=300', fallback: 'https://placekitten.com/400/300' },
+        { icon: '🐶', label: 'photo_chien.jpg', imgUrl: 'https://dog.ceo/api/breeds/image/random',      fallback: 'https://placedog.net/400/300' },
+      ];
+
+      files.forEach(({ icon, label, imgUrl, fallback }) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'dblclick-target';
+        wrap.innerHTML = `<div class="file-icon-wrap">${icon}</div><span class="file-label">${label}</span>`;
+
+        wrap.addEventListener('dblclick', async () => {
+          if (done) return;
+          done = true;
+
+          // Resolve dog API if needed
+          let resolvedUrl = imgUrl;
+          if (imgUrl.includes('dog.ceo')) {
+            try {
+              const res = await fetch(imgUrl);
+              const data = await res.json();
+              resolvedUrl = data.message;
+            } catch { resolvedUrl = fallback; }
+          }
+
+          // Build viewer: full-frame image only
+          const viewer = document.createElement('div');
+          viewer.style.cssText = `
+            position:absolute;inset:0;background:rgba(6,29,51,0.97);
+            border-radius:12px;z-index:35;display:flex;flex-direction:column;
+            align-items:stretch;overflow:hidden;
+          `;
+          viewer.innerHTML = `
+            <div style="display:flex;align-items:center;padding:10px 14px;
+                        background:rgba(255,255,255,0.06);
+                        border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;">
+              <span style="font-size:1rem;margin-right:8px;">${icon}</span>
+              <span style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.85);">${label}</span>
+            </div>
+            <div style="flex:1;overflow:hidden;">
+              <img src="${resolvedUrl}" alt="${label}"
+                   style="width:100%;height:100%;display:block;
+                          object-fit:cover;border-radius:0 0 12px 12px;"
+                   onerror="this.src='${fallback}'"/>
+            </div>
+          `;
+          zone.appendChild(viewer);
+        });
+
+        zoneUI.appendChild(wrap);
+      });
+      break;
+    }
+  }
+}
+
+// ─── VALIDATE ──────────────────────────────────────────────────────────────────
+function validateDelayed(delay, force) {
+  if (done && !force) return;
+  done = true;
+  validateTimer1 = setTimeout(() => {
+    valFlash.classList.add('show');
+    validateTimer2 = setTimeout(() => {
+      valFlash.classList.remove('show');
+      if (idx < CHALLENGES.length - 1) {
+        idx++;
+        maxReached = Math.max(maxReached, idx);
+        load(idx);
+      }
+    }, 900);
+  }, delay);
+}
+
+function validate() {
+  validateDelayed(0);
+}
+
+// ─── RESET ─────────────────────────────────────────────────────────────────────
+function reset() {
+  idx = 0;
+  maxReached = 0;
+  load(0);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+load(0);
+
+// ─── DOT NAVIGATION ───────────────────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const dot = e.target.closest('.progress-dot');
+  if (!dot) return;
+  const dots = [...document.querySelectorAll('.progress-dot')];
+  const j = dots.indexOf(dot);
+  if (j >= 0 && j !== idx && j <= maxReached) {
+    idx = j;
+    load(idx);
+  }
+});
+</script>
+</body>
+</html>

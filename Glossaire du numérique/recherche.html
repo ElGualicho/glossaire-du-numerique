@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Barre de Recherche</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #061d33;
+  --accent:     #60b2c8;
+  --white:      #ffffff;
+  --muted:      rgba(255,255,255,0.45);
+  --border-dk:  rgba(255,255,255,0.10);
+  --success:    #3dba7a;
+  /* browser vars */
+  --chrome-bg:  #dee1e6;
+  --tab-bg:     #c5cad3;
+  --win-text:   #202124;
+  --win-muted:  #70757a;
+  --link-color: #1a0dab;
+  --url-color:  #006621;
+  --ad-color:   #006621;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--white);
+}
+
+/* ═══════════════════════════════════════
+   OUTER LAYOUT
+═══════════════════════════════════════ */
+.layout {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 14px;
+  gap: 12px;
+}
+
+/* ═══════════════════════════════════════
+   BROWSER WINDOW
+═══════════════════════════════════════ */
+.browser-window {
+  flex: 1;
+  min-height: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── Chrome top ── */
+.chrome-top {
+  background: var(--chrome-bg);
+  flex-shrink: 0;
+}
+
+.tab-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px 12px 0;
+}
+
+.chrome-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-right: 6px;
+}
+.chrome-dots span {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: rgba(0,0,0,0.25);
+}
+.chrome-dots span:nth-child(1) { background: #ff6058; }
+.chrome-dots span:nth-child(2) { background: #ffbe2e; }
+.chrome-dots span:nth-child(3) { background: #28c840; }
+
+.chrome-tab {
+  background: #fff;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 16px 6px 10px;
+  font-size: 0.72rem;
+  color: var(--win-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 140px;
+  max-width: 220px;
+  user-select: none;
+}
+.tab-favicon { font-size: 0.8rem; }
+.tab-title   { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.tab-close   { color: var(--win-muted); font-size: 0.9rem; cursor: default; }
+
+.tab-new {
+  color: var(--win-muted);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  cursor: default;
+  margin-bottom: 2px;
+}
+
+/* ── Address bar row ── */
+.chrome-bar {
+  padding: 6px 12px 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--win-muted);
+  font-size: 1rem;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.nav-btn:not(:disabled):hover { background: rgba(0,0,0,0.08); }
+.nav-btn:disabled { opacity: 0.38; }
+
+.url-container {
+  flex: 1;
+  background: #fff;
+  border-radius: 20px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  cursor: text;
+  border: 1.5px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.url-container:hover { background: #f1f3f4; }
+.url-container.focused {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+  background: #fff;
+  cursor: text;
+}
+
+.url-icon { font-size: 0.85rem; flex-shrink: 0; color: var(--win-muted); line-height: 1; }
+.url-input {
+  flex: 1;
+  border: none; outline: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  color: var(--win-text);
+  background: transparent;
+  min-width: 0;
+  caret-color: #1a73e8;
+}
+.url-input::selection { background: #c2d7f5; }
+.url-clear {
+  background: none; border: none;
+  color: var(--win-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px;
+  display: none;
+  line-height: 1;
+}
+
+/* Pulse animation on URL bar when waiting for click */
+.url-container.pulse {
+  animation: pulseBar 1.8s ease-in-out infinite;
+}
+@keyframes pulseBar {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(96,178,200,0); }
+  50%       { box-shadow: 0 0 0 4px rgba(96,178,200,0.35); }
+}
+
+/* ── Bookmarks bar ── */
+.bookmarks-bar {
+  border-top: 1px solid rgba(0,0,0,0.10);
+  padding: 4px 14px;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  background: var(--chrome-bg);
+}
+.bm {
+  font-size: 0.71rem;
+  color: var(--win-text);
+  padding: 3px 9px;
+  border-radius: 4px;
+  cursor: default;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.bm:hover { background: rgba(0,0,0,0.08); }
+
+/* ── Browser content ── */
+.browser-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #fff;
+  position: relative;
+  min-height: 0;
+}
+.browser-content::-webkit-scrollbar { width: 7px; }
+.browser-content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+/* ── Autocomplete dropdown ── */
+.autocomplete {
+  position: absolute;
+  top: calc(8px + 34px + 6px + 7px + 28px);  /* tab-bar + chrome-bar padding */
+  left: 90px;
+  right: 50px;
+  background: #fff;
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  z-index: 20;
+  overflow: hidden;
+  display: none;
+  border-top: 1px solid #e8e8e8;
+}
+
+.ac-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--win-text);
+  transition: background 0.12s;
+}
+.ac-item:hover { background: #f1f3f4; }
+.ac-item:hover .ac-label { font-weight: 600; }
+.ac-icon { font-size: 0.9rem; width: 20px; text-align: center; color: var(--win-muted); flex-shrink: 0; }
+.ac-label { flex: 1; }
+.ac-arrow { color: var(--win-muted); font-size: 0.75rem; }
+
+/* ═══════════════════════════════════════
+   CONTENT AREAS (injected by JS)
+═══════════════════════════════════════ */
+
+/* New tab */
+.new-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 24px;
+  padding: 20px;
+}
+.google-logo {
+  font-size: 3.2rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  user-select: none;
+}
+.gl-b { color: #4285f4; }
+.gl-r { color: #ea4335; }
+.gl-y { color: #fbbc05; }
+.gl-g { color: #34a853; }
+
+.fake-searchbar {
+  width: min(480px, 90%);
+  height: 44px;
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid #dfe1e5;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 10px;
+  color: var(--win-muted);
+  font-size: 0.88rem;
+  cursor: text;
+}
+
+/* Results page */
+.results-page {
+  padding: 14px 24px 24px;
+  font-family: arial, sans-serif;
+  max-width: 700px;
+}
+.results-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.results-logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.results-bar {
+  flex: 1;
+  height: 40px;
+  background: #fff;
+  border: 1px solid #dfe1e5;
+  border-radius: 22px;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 0.84rem;
+  color: var(--win-text);
+  gap: 8px;
+}
+.results-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+}
+.rtab {
+  padding: 8px 14px;
+  color: var(--win-muted);
+  cursor: default;
+  border-bottom: 3px solid transparent;
+}
+.rtab.active { color: #1a73e8; border-bottom-color: #1a73e8; font-weight: 600; }
+
+.result-stats { font-size: 0.74rem; color: var(--win-muted); margin-bottom: 14px; }
+
+.result-item {
+  margin-bottom: 20px;
+  cursor: pointer;
+  max-width: 600px;
+}
+.result-item:hover .result-title { text-decoration: underline; }
+
+.result-ad-tag {
+  display: inline-block;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #006621;
+  border: 1px solid #006621;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.result-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.result-favicon {
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  background: #e8e8e8;
+  font-size: 0.65rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.result-domain { font-size: 0.78rem; color: var(--win-muted); }
+.result-title  { font-size: 1rem; color: var(--link-color); font-weight: 400; margin-bottom: 3px; line-height: 1.3; }
+.result-item:hover .result-title { color: #0b57d0; }
+.result-desc   { font-size: 0.82rem; color: #4d5156; line-height: 1.5; }
+.result-date   { color: var(--win-muted); }
+
+/* Annotation tooltip (appears after results load) */
+.annotation {
+  position: absolute;
+  background: var(--bg);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.74rem;
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  max-width: 200px;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 10;
+  animation: fadeInNote 0.35s ease both;
+  pointer-events: none;
+}
+.annotation::before {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  background: var(--bg);
+  border-left: 1.5px solid var(--accent);
+  border-bottom: 1.5px solid var(--accent);
+  top: -5px; left: 16px;
+  transform: rotate(135deg);
+}
+@keyframes fadeInNote {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Website */
+.website {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+}
+.site-nav {
+  background: #1558d6;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.site-logo {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+}
+.site-nav-links {
+  display: flex;
+  gap: 16px;
+}
+.snl { font-size: 0.76rem; color: rgba(255,255,255,0.8); cursor: default; }
+
+.site-hero {
+  background: linear-gradient(135deg, #e8f0fe 0%, #f8f9fa 100%);
+  padding: 22px 24px 18px;
+  flex-shrink: 0;
+}
+.site-hero h1 { font-size: 1.1rem; font-weight: 700; color: #1a2840; margin-bottom: 6px; }
+.site-hero p  { font-size: 0.8rem; color: #5f6368; line-height: 1.55; }
+
+.site-body {
+  flex: 1;
+  padding: 18px 24px;
+  display: flex;
+  gap: 20px;
+  overflow-y: auto;
+}
+.site-col { flex: 1; }
+.site-card {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  cursor: default;
+}
+.site-card h3 { font-size: 0.82rem; font-weight: 700; color: #1558d6; margin-bottom: 5px; }
+.site-card p  { font-size: 0.76rem; color: #5f6368; line-height: 1.5; }
+.site-card-btn {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: #1558d6;
+  cursor: default;
+}
+
+/* URL highlight when on website */
+.url-highlight {
+  background: rgba(96,178,200,0.18);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* ═══════════════════════════════════════
+   INSTRUCTION BAR
+═══════════════════════════════════════ */
+.instruction-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-dk);
+  border-radius: 10px;
+}
+
+.inst-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.inst-text {
+  flex: 1;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.4;
+}
+.inst-text strong { color: var(--accent); }
+
+.step-dots { display: flex; gap: 7px; flex-shrink: 0; }
+.sdot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.3s;
+}
+.sdot.active { background: var(--accent); transform: scale(1.4); }
+.sdot.done   { background: var(--success); }
+
+/* Page transition */
+.browser-content.transitioning { opacity: 0; transition: opacity 0.2s; }
+.browser-content.entering { opacity: 1; transition: opacity 0.3s; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── BROWSER WINDOW ── -->
+  <div class="browser-window">
+
+    <div class="chrome-top">
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <div class="chrome-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="chrome-tab">
+          <span class="tab-favicon" id="tabFavicon">🔍</span>
+          <span class="tab-title"   id="tabTitle">Nouvel onglet</span>
+          <span class="tab-close">×</span>
+        </div>
+        <div class="tab-new">+</div>
+      </div>
+
+      <!-- Address bar -->
+      <div class="chrome-bar">
+        <button class="nav-btn" id="btnBack"    disabled>&#8592;</button>
+        <button class="nav-btn" id="btnForward" disabled>&#8594;</button>
+        <button class="nav-btn" id="btnRefresh">&#8635;</button>
+        <div class="url-container pulse" id="urlContainer" onclick="onBarClick()">
+          <span class="url-icon" id="urlIcon">🔍</span>
+          <input  class="url-input" id="urlInput" type="text"
+                  placeholder="Rechercher ou saisir une adresse web…"
+                  autocomplete="off" spellcheck="false" readonly>
+          <button class="url-clear" id="urlClear" onclick="clearBar(event)">✕</button>
+        </div>
+        <button class="nav-btn">&#8942;</button>
+      </div>
+
+      <!-- Bookmarks -->
+      <div class="bookmarks-bar">
+        <span class="bm">📋 Ameli</span>
+        <span class="bm">🏛️ Service-Public</span>
+        <span class="bm">📄 Impôts</span>
+        <span class="bm">📦 La Poste</span>
+        <span class="bm">🗺️ Mairie</span>
+      </div>
+    </div>
+
+    <!-- Content area -->
+    <div class="browser-content" id="browserContent"></div>
+
+    <!-- Autocomplete -->
+    <div class="autocomplete" id="autocomplete"></div>
+
+  </div><!-- /browser-window -->
+
+  <!-- ── INSTRUCTION BAR ── -->
+  <div class="instruction-bar">
+    <span class="inst-icon" id="instIcon">💡</span>
+    <span class="inst-text" id="instText">Cliquez sur la <strong>barre de recherche</strong> en haut pour commencer</span>
+    <div class="step-dots">
+      <div class="sdot active" id="sd0"></div>
+      <div class="sdot"        id="sd1"></div>
+      <div class="sdot"        id="sd2"></div>
+      <div class="sdot"        id="sd3"></div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   DONNÉES
+═══════════════════════════════════════════════════════════ */
+const SUGGESTIONS = [
+  { icon: '🔍', label: 'service-public.fr démarches en ligne', type: 'official',
+    query: 'service-public.fr démarches en ligne',
+    url: 'https://www.service-public.fr',
+    results: [
+      { ad: true,  favicon: '🏛️', domain: 'service-public.fr',
+        title: 'Service-Public.fr – Le site officiel de l\'administration',
+        desc: 'Retrouvez toutes les informations et démarches administratives officielles : état civil, logement, emploi, famille, retraite.' },
+      { ad: false, favicon: '🇫🇷', domain: 'service-public.fr',
+        title: 'Vos démarches en ligne – Espace particuliers',
+        desc: 'Déclarez un changement d\'adresse, faites une demande de carte d\'identité, consultez vos droits à la retraite…' },
+      { ad: false, favicon: '📋', domain: 'ameli.fr',
+        title: 'Assurance Maladie – Toutes vos démarches en ligne',
+        desc: 'Consultez vos remboursements, téléchargez votre attestation, déclarez un médecin traitant sur ameli.fr.' },
+      { ad: false, favicon: '📄', domain: 'impots.gouv.fr',
+        title: 'Votre espace particulier – Impôts.gouv.fr',
+        desc: 'Déclarez vos revenus, consultez votre avis d\'imposition, payez votre taxe foncière en ligne.' },
+    ]
+  },
+  { icon: '🔍', label: 'météo Montpellier aujourd\'hui', type: 'weather',
+    query: 'météo Montpellier aujourd\'hui',
+    url: 'https://www.meteofrance.fr',
+    results: [
+      { ad: false, favicon: '🌤️', domain: 'meteofrance.fr',
+        title: 'Météo Montpellier – Prévisions 15 jours – Météo-France',
+        desc: 'Retrouvez les prévisions météo à Montpellier (34000) : températures, risque de pluie, vent, ensoleillement. Mises à jour toutes les heures.' },
+      { ad: false, favicon: '🌡️', domain: 'weather.com',
+        title: 'Météo à Montpellier, Hérault – The Weather Channel',
+        desc: 'Montpellier (34) – Prévisions météo détaillées heure par heure. Températures, probabilité de précipitations, humidité.' },
+      { ad: false, favicon: '📱', domain: 'accuweather.com',
+        title: 'Prévisions Montpellier – AccuWeather',
+        desc: 'Prévisions météo précises pour Montpellier sur 45 jours. Alertes météo, UV, qualité de l\'air.' },
+    ]
+  },
+  { icon: '🔍', label: 'ameli.fr mon compte remboursements', type: 'official',
+    query: 'ameli.fr mon compte remboursements',
+    url: 'https://www.ameli.fr',
+    results: [
+      { ad: false, favicon: '🏥', domain: 'ameli.fr',
+        title: 'Mon espace – Assurance Maladie – ameli.fr',
+        desc: 'Connectez-vous à votre espace personnel pour consulter vos remboursements, télécharger vos attestations et gérer votre dossier.' },
+      { ad: false, favicon: '📋', domain: 'ameli.fr',
+        title: 'Vos remboursements de soins – ameli.fr',
+        desc: 'Consultez le détail de vos remboursements de médicaments, consultations et soins dentaires ou optiques.' },
+      { ad: false, favicon: '🔒', domain: 'amelipro.fr',
+        title: 'amelipro – Espace professionnel de santé',
+        desc: 'Portail dédié aux professionnels de santé pour la télétransmission des feuilles de soins.' },
+    ]
+  },
+  { icon: '🔍', label: 'mairie Castelnau-le-Lez horaires', type: 'official',
+    query: 'mairie Castelnau-le-Lez horaires',
+    url: 'https://www.ville-castelnau-le-lez.fr',
+    results: [
+      { ad: false, favicon: '🗺️', domain: 'ville-castelnau-le-lez.fr',
+        title: 'Mairie de Castelnau-le-Lez – Site officiel',
+        desc: 'Retrouvez les actualités, les services et les informations pratiques de la Mairie de Castelnau-le-Lez (34170).' },
+      { ad: false, favicon: '📍', domain: 'pages-jaunes.fr',
+        title: 'Mairie de Castelnau-le-Lez – Horaires et coordonnées',
+        desc: 'Adresse, téléphone, horaires d\'ouverture de la Mairie de Castelnau-le-Lez. Prenez rendez-vous en ligne.' },
+      { ad: false, favicon: '🌐', domain: 'annuaire.service-public.fr',
+        title: 'Mairie de Castelnau-le-Lez – Annuaire Service-Public',
+        desc: 'Coordonnées officielles, compétences et services de la Mairie de Castelnau-le-Lez issus de l\'annuaire de l\'administration.' },
+    ]
+  },
+  { icon: '🔍', label: 'SNCF acheter billet de train en ligne', type: 'commercial',
+    query: 'SNCF acheter billet de train en ligne',
+    url: 'https://www.sncf-connect.com',
+    results: [
+      { ad: true,  favicon: '🚆', domain: 'sncf-connect.com',
+        title: 'SNCF Connect – Billets de train pas chers',
+        desc: 'Réservez vos billets SNCF en ligne : TGV, Intercités, TER. Profitez des meilleures offres tarifaires et des cartes de réduction.' },
+      { ad: false, favicon: '🚄', domain: 'sncf-connect.com',
+        title: 'Horaires et réservations – SNCF Connect',
+        desc: 'Recherchez vos trains, comparez les horaires et réservez votre billet en quelques clics sur SNCF Connect.' },
+      { ad: false, favicon: '💺', domain: 'oui.sncf',
+        title: 'Billet de train au meilleur prix – OUI.sncf',
+        desc: 'Trouvez les offres promotionnelles, les Prem\'s et les billets dernière minute sur le réseau TGV, Ouigo et Intercités.' },
+    ]
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let step = 0;          // 0=newtab, 1=typing, 2=results, 3=website
+let chosenQuery = null;
+let typingTimer  = null;
+let typingIdx    = 0;
+
+const STEPS = [
+  { icon: '💡', text: 'Cliquez sur la <strong>barre de recherche</strong> en haut pour commencer' },
+  { icon: '🔍', text: 'Des <strong>suggestions</strong> apparaissent — cliquez sur l\'une d\'elles' },
+  { icon: '🖱️', text: 'Voici la <strong>page de résultats</strong> — cliquez sur un résultat pour ouvrir le site' },
+  { icon: '✅', text: 'Vous êtes sur le <strong>site web</strong> — l\'adresse s\'affiche dans la barre en haut' },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+function init() {
+  showNewTab();
+  setInstruction(0);
+}
+
+function setInstruction(s) {
+  document.getElementById('instIcon').textContent = STEPS[s].icon;
+  document.getElementById('instText').innerHTML   = STEPS[s].text;
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('sd' + i);
+    d.className = 'sdot' + (i < s ? ' done' : i === s ? ' active' : '');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NEW TAB PAGE
+═══════════════════════════════════════════════════════════ */
+function showNewTab() {
+  setContent(`
+    <div class="new-tab">
+      <div class="google-logo">
+        <span class="gl-b">G</span><span class="gl-r">o</span><span class="gl-y">o</span><span class="gl-b">g</span><span class="gl-g">l</span><span class="gl-r">e</span>
+      </div>
+      <div class="fake-searchbar">
+        <span style="font-size:0.9rem">🔍</span>
+        <span>Rechercher…</span>
+      </div>
+    </div>
+  `);
+  setTab('🔍', 'Nouvel onglet');
+  setUrl('', '🔍', false);
+  document.getElementById('urlContainer').classList.add('pulse');
+  document.getElementById('btnBack').disabled    = true;
+  document.getElementById('btnForward').disabled = true;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BAR CLICK — Step 0 → 1
+═══════════════════════════════════════════════════════════ */
+function onBarClick() {
+  if (step !== 0) return;
+  step = 1;
+  setInstruction(1);
+
+  const bar = document.getElementById('urlContainer');
+  bar.classList.remove('pulse');
+  bar.classList.add('focused');
+
+  const input = document.getElementById('urlInput');
+  input.removeAttribute('readonly');
+  input.focus();
+
+  document.getElementById('urlClear').style.display = 'block';
+  document.getElementById('urlIcon').textContent    = '🔍';
+
+  /* auto-type a query then show suggestions */
+  const demoQuery = SUGGESTIONS[0].label;
+  typingIdx = 0;
+  input.value = '';
+
+  typingTimer = setInterval(() => {
+    if (typingIdx < demoQuery.length) {
+      input.value += demoQuery[typingIdx++];
+      if (typingIdx === 4) showAutocomplete();   // show dropdown early
+    } else {
+      clearInterval(typingTimer);
+    }
+  }, 48);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTOCOMPLETE
+═══════════════════════════════════════════════════════════ */
+function showAutocomplete() {
+  const ac = document.getElementById('autocomplete');
+  ac.innerHTML = SUGGESTIONS.map((s, i) => `
+    <div class="ac-item" onclick="chooseSuggestion(${i})">
+      <span class="ac-icon">${s.icon}</span>
+      <span class="ac-label">${s.label}</span>
+      <span class="ac-arrow">&#x2197;</span>
+    </div>
+  `).join('');
+  ac.style.display = 'block';
+}
+
+function hideAutocomplete() {
+  document.getElementById('autocomplete').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUGGESTION CHOSEN — Step 1 → 2
+═══════════════════════════════════════════════════════════ */
+function chooseSuggestion(idx) {
+  if (step !== 1) return;
+  step = 2;
+  clearInterval(typingTimer);
+
+  chosenQuery = SUGGESTIONS[idx];
+  hideAutocomplete();
+
+  const input = document.getElementById('urlInput');
+  input.value = chosenQuery.query;
+  input.setAttribute('readonly', true);
+
+  const bar = document.getElementById('urlContainer');
+  bar.classList.remove('focused');
+
+  setUrl('https://www.google.fr/search?q=' + encodeURIComponent(chosenQuery.query), '🔒', true);
+  setTab('🌐', 'Résultats – ' + chosenQuery.query);
+
+  document.getElementById('btnBack').disabled    = false;
+  document.getElementById('btnForward').disabled = true;
+
+  transitionContent(() => showResults(chosenQuery));
+  setInstruction(2);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESULTS PAGE — Step 2
+═══════════════════════════════════════════════════════════ */
+function showResults(q) {
+  const logoHTML = `<span class="gl-b" style="font-size:1.4rem;font-weight:700">G</span><span class="gl-r" style="font-size:1.4rem;font-weight:700">o</span><span class="gl-y" style="font-size:1.4rem;font-weight:700">o</span><span class="gl-b" style="font-size:1.4rem;font-weight:700">g</span><span class="gl-g" style="font-size:1.4rem;font-weight:700">l</span><span class="gl-r" style="font-size:1.4rem;font-weight:700">e</span>`;
+
+  const resultsHTML = q.results.map((r, i) => `
+    <div class="result-item" onclick="visitSite(${i})">
+      ${r.ad ? `<div style="margin-bottom:3px;"><span class="result-ad-tag">Annonce</span><span style="font-size:0.72rem;color:var(--win-muted);">${r.domain}</span></div>` : ''}
+      <div class="result-source">
+        <div class="result-favicon">${r.favicon}</div>
+        <span class="result-domain">${r.ad ? '' : r.domain}</span>
+      </div>
+      <div class="result-title">${r.title}</div>
+      <div class="result-desc">${r.desc}</div>
+    </div>
+  `).join('');
+
+  setContent(`
+    <div class="results-page">
+      <div class="results-top">
+        <div class="results-logo">${logoHTML}</div>
+        <div class="results-bar">
+          <span style="font-size:0.85rem;color:var(--win-muted)">🔍</span>
+          ${q.query}
+        </div>
+      </div>
+      <div class="results-tabs">
+        <div class="rtab active">Tous</div>
+        <div class="rtab">Actualités</div>
+        <div class="rtab">Images</div>
+        <div class="rtab">Vidéos</div>
+        <div class="rtab">Cartes</div>
+      </div>
+      <div class="result-stats">Environ 847 000 résultats (0,42 secondes)</div>
+      ${resultsHTML}
+    </div>
+  `);
+
+  /* Annotation: explain what they see */
+  setTimeout(() => {
+    const container = document.getElementById('browserContent');
+    const note = document.createElement('div');
+    note.className = 'annotation';
+    note.style.top  = '70px';
+    note.style.left = '24px';
+    note.innerHTML = q.results[0].ad
+      ? '⚠️ <strong>Annonce</strong> — ce résultat est payant. Faites défiler pour trouver les résultats naturels.'
+      : '📋 Les résultats les plus pertinents apparaissent en premier. Cliquez sur un titre pour ouvrir le site.';
+    container.style.position = 'relative';
+    container.appendChild(note);
+  }, 500);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SITE — Step 2 → 3
+═══════════════════════════════════════════════════════════ */
+function visitSite(resultIdx) {
+  if (step !== 2) return;
+  step = 3;
+
+  const r = chosenQuery.results[resultIdx];
+  const siteUrl = chosenQuery.url;
+
+  setUrl(siteUrl, '🔒', true);
+  setTab('🌐', r.title.split(' – ')[0]);
+  document.getElementById('btnBack').disabled    = false;
+  document.getElementById('btnForward').disabled = true;
+
+  transitionContent(() => showWebsite(r, siteUrl));
+  setInstruction(3);
+}
+
+function showWebsite(r, url) {
+  const siteName = r.domain.split('.')[0].charAt(0).toUpperCase() + r.domain.split('.')[0].slice(1);
+  const navLinks = ['Accueil', 'Mes démarches', 'Contact', 'Aide'];
+
+  setContent(`
+    <div class="website">
+      <div class="site-nav">
+        <div class="site-logo">${r.favicon} ${siteName}</div>
+        <div class="site-nav-links">
+          ${navLinks.map(l => `<span class="snl">${l}</span>`).join('')}
+        </div>
+      </div>
+      <div class="site-hero">
+        <h1>${r.title}</h1>
+        <p>${r.desc}</p>
+      </div>
+      <div class="site-body">
+        <div class="site-col">
+          <div class="site-card">
+            <h3>📋 Mes démarches</h3>
+            <p>Accédez à toutes vos démarches administratives personnalisées depuis votre espace sécurisé.</p>
+            <span class="site-card-btn">Se connecter →</span>
+          </div>
+          <div class="site-card">
+            <h3>📄 Formulaires en ligne</h3>
+            <p>Remplissez et envoyez vos formulaires officiels sans vous déplacer.</p>
+            <span class="site-card-btn">Voir les formulaires →</span>
+          </div>
+        </div>
+        <div class="site-col">
+          <div class="site-card">
+            <h3>📞 Nous contacter</h3>
+            <p>Besoin d'aide ? Retrouvez les coordonnées et horaires de votre service.</p>
+            <span class="site-card-btn">Trouver un service →</span>
+          </div>
+          <div class="site-card">
+            <h3>❓ Questions fréquentes</h3>
+            <p>Consultez notre aide en ligne pour les demandes les plus courantes.</p>
+            <span class="site-card-btn">Consulter l'aide →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  /* Highlight the URL in address bar */
+  setTimeout(() => {
+    const input = document.getElementById('urlInput');
+    const domain = url.replace('https://', '').replace('http://', '');
+    input.value = url;
+
+    /* Add annotation pointing to URL bar */
+    const outer = document.querySelector('.layout');
+    const note = document.createElement('div');
+    note.style.cssText = `
+      position:absolute; top: 68px; left: 110px;
+      background:var(--bg); border:1.5px solid var(--accent);
+      border-radius:8px; padding:8px 12px;
+      font-size:0.74rem; color:var(--white);
+      font-family:'Inter',sans-serif; max-width:220px;
+      line-height:1.45; box-shadow:0 8px 24px rgba(0,0,0,0.5);
+      z-index:100; animation:fadeInNote 0.35s ease both;
+      pointer-events:none;
+    `;
+    note.innerHTML = `🔒 <strong style="color:var(--accent)">L'adresse du site</strong> s'affiche ici. Le cadenas <strong>🔒</strong> indique une connexion sécurisée.`;
+    document.querySelector('.layout').style.position = 'relative';
+    document.querySelector('.layout').appendChild(note);
+
+    /* Restart button */
+    setTimeout(() => {
+      document.getElementById('instText').innerHTML =
+        '<strong style="color:var(--accent)">Bravo !</strong> Vous savez maintenant utiliser la barre de recherche. ' +
+        '<button onclick="restart()" style="background:var(--accent);color:#061d33;border:none;padding:3px 12px;border-radius:20px;font-family:Inter,sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer;margin-left:8px;">↩ Recommencer</button>';
+      document.getElementById('instIcon').textContent = '🎉';
+      for (let i = 0; i < 4; i++) document.getElementById('sd'+i).className = 'sdot done';
+
+      /* Remove annotation after a few seconds */
+      setTimeout(() => { try { note.remove(); } catch(e) {} }, 5000);
+    }, 2500);
+  }, 400);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+function setContent(html) {
+  document.getElementById('browserContent').innerHTML = html;
+}
+
+function transitionContent(fn) {
+  const c = document.getElementById('browserContent');
+  c.classList.add('transitioning');
+  setTimeout(() => {
+    fn();
+    c.classList.remove('transitioning');
+    c.classList.add('entering');
+    setTimeout(() => c.classList.remove('entering'), 300);
+  }, 200);
+}
+
+function setUrl(url, icon, secure) {
+  const input = document.getElementById('urlInput');
+  const iconEl = document.getElementById('urlIcon');
+  input.value    = url;
+  iconEl.textContent = icon;
+}
+
+function setTab(favicon, title) {
+  document.getElementById('tabFavicon').textContent = favicon;
+  document.getElementById('tabTitle').textContent   = title;
+}
+
+function clearBar(e) {
+  e.stopPropagation();
+  const input = document.getElementById('urlInput');
+  clearInterval(typingTimer);
+  input.value = '';
+  hideAutocomplete();
+  document.getElementById('urlClear').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESTART
+═══════════════════════════════════════════════════════════ */
+function restart() {
+  step = 0;
+  chosenQuery = null;
+  clearInterval(typingTimer);
+  hideAutocomplete();
+
+  /* Remove any floating annotations */
+  document.querySelectorAll('.layout > div:not(.browser-window):not(.instruction-bar)').forEach(el => el.remove());
+  document.querySelector('.layout').style.position = '';
+
+  const input = document.getElementById('urlInput');
+  input.value = '';
+  input.setAttribute('readonly', true);
+  document.getElementById('urlClear').style.display = 'none';
+  document.getElementById('urlContainer').classList.add('pulse');
+  document.getElementById('urlContainer').classList.remove('focused');
+
+  showNewTab();
+  setInstruction(0);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEYBOARD — close autocomplete on Escape
+═══════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideAutocomplete();
+});
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

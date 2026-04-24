@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mot de passe</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #f4f6f9;
+    --surface:      #ffffff;
+    --border:       #dde3ec;
+    --text:         #1a2840;
+    --text-muted:   #7b8ba4;
+    --accent:       #60b2c8;
+    --accent-dark:  #061d33;
+    --accent-light: #e8f4f8;
+    --danger:       #e05252;
+    --warn:         #f4a535;
+    --success:      #3dba7a;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* ── WINDOW ── */
+  .window {
+    width: 100%;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── HEADER ── */
+  .win-header {
+    background: var(--accent-dark);
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .win-header-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.01em;
+  }
+
+  .win-close {
+    color: rgba(255,255,255,0.45);
+    font-size: 1rem;
+    cursor: default;
+    line-height: 1;
+  }
+
+  /* ── BODY ── */
+  .win-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 22px 18px;
+    gap: 16px;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ── INPUT ZONE ── */
+  .input-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .pw-input {
+    width: 100%;
+    padding: 12px 46px 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .pw-input:focus { border-color: var(--accent); }
+
+  .eye-btn {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.15s;
+  }
+  .eye-btn:hover { color: var(--accent-dark); }
+
+  /* ── STRENGTH BAR ── */
+  .strength-wrap { display: flex; flex-direction: column; gap: 6px; }
+
+  .strength-bars {
+    display: flex;
+    gap: 5px;
+  }
+
+  .strength-bar {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border);
+    transition: background 0.35s ease;
+  }
+
+  .strength-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .strength-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: color 0.3s;
+    color: var(--text-muted);
+  }
+
+  .strength-score {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  /* ── CRITERIA ── */
+  .criteria-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+  }
+
+  .crit {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+  }
+
+  .crit-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .crit.ok { color: var(--text); }
+  .crit.ok .crit-dot {
+    background: var(--success);
+    box-shadow: 0 0 5px rgba(61,186,122,0.4);
+  }
+
+  /* ── VERDICT CARD ── */
+  .verdict {
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.3s, border-color 0.3s;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    flex-shrink: 0;
+  }
+
+  .verdict-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+  .verdict-text { flex: 1; }
+
+  .verdict-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    transition: color 0.3s;
+    color: var(--text-muted);
+  }
+
+  .verdict-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    transition: color 0.3s;
+  }
+
+
+</style>
+</head>
+<body>
+
+<div class="window">
+
+  <!-- Header -->
+  <div class="win-header">
+    <span class="win-header-title">🔒 Testez votre mot de passe</span>
+    <span class="win-close">✕</span>
+  </div>
+
+  <!-- Body -->
+  <div class="win-body">
+
+    <!-- Input -->
+    <div>
+      <div class="input-label">Saisir un mot de passe</div>
+      <div class="input-wrap">
+        <input class="pw-input" id="pwInput" type="password"
+               placeholder="Tapez un mot de passe…" autocomplete="off" spellcheck="false">
+        <button class="eye-btn" id="eyeBtn" title="Afficher / masquer">👁</button>
+      </div>
+    </div>
+
+    <!-- Strength bar -->
+    <div class="strength-wrap">
+      <div class="strength-bars">
+        <div class="strength-bar" id="bar0"></div>
+        <div class="strength-bar" id="bar1"></div>
+        <div class="strength-bar" id="bar2"></div>
+        <div class="strength-bar" id="bar3"></div>
+      </div>
+      <div class="strength-label-row">
+        <span class="strength-text" id="strengthText">—</span>
+        <span class="strength-score" id="strengthScore"></span>
+      </div>
+    </div>
+
+    <!-- Criteria -->
+    <div class="criteria-grid">
+      <div class="crit" id="cLen">
+        <div class="crit-dot"></div>
+        <span>12 caractères minimum</span>
+      </div>
+      <div class="crit" id="cUpper">
+        <div class="crit-dot"></div>
+        <span>Une majuscule</span>
+      </div>
+      <div class="crit" id="cNum">
+        <div class="crit-dot"></div>
+        <span>Un chiffre</span>
+      </div>
+      <div class="crit" id="cSpecial">
+        <div class="crit-dot"></div>
+        <span>Un caractère spécial</span>
+      </div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="verdict" id="verdict">
+      <span class="verdict-icon" id="verdictIcon">🔓</span>
+      <div class="verdict-text">
+        <div class="verdict-title" id="verdictTitle">Entrez un mot de passe</div>
+      </div>
+    </div>
+
+
+
+  </div>
+</div>
+
+<script>
+const input       = document.getElementById('pwInput');
+const eyeBtn      = document.getElementById('eyeBtn');
+const bars        = [0,1,2,3].map(i => document.getElementById('bar' + i));
+const strengthTxt = document.getElementById('strengthText');
+const strengthSc  = document.getElementById('strengthScore');
+const verdict     = document.getElementById('verdict');
+const verdictIcon = document.getElementById('verdictIcon');
+const verdictTtl  = document.getElementById('verdictTitle');
+const verdictSub  = document.getElementById('verdictSub');
+
+// Criteria elements
+const crits = {
+  len:     document.getElementById('cLen'),
+  upper:   document.getElementById('cUpper'),
+  num:     document.getElementById('cNum'),
+  special: document.getElementById('cSpecial'),
+};
+
+// ── EYE TOGGLE ──────────────────────────────────────────────────────────────
+eyeBtn.addEventListener('click', () => {
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  eyeBtn.textContent = show ? '🙈' : '👁';
+});
+
+// ── SCORE ───────────────────────────────────────────────────────────────────
+function score(pw) {
+  if (!pw) return 0;
+  let s = 0;
+  if (pw.length >= 8)  s++;
+  if (pw.length >= 12) s++;
+  if (/[A-Z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw)) s++;
+  if (/[^A-Za-z0-9]/.test(pw)) s++;
+  // Bonus longueur généreuse
+  if (pw.length >= 16) s++;
+  return Math.min(s, 4);
+}
+
+// ── LEVELS ──────────────────────────────────────────────────────────────────
+const LEVELS = [
+  null,
+  {
+    label: 'Très faible',   color: '#e05252',
+    icon: '🔓', bg: 'rgba(224,82,82,0.07)', border: 'rgba(224,82,82,0.28)',
+    title: 'Mot de passe très facile à deviner',
+    sub: 'N\'importe qui pourrait trouver ce mot de passe en quelques secondes.'
+  },
+  {
+    label: 'Faible',        color: '#e07a35',
+    icon: '⚠️', bg: 'rgba(244,165,53,0.07)', border: 'rgba(244,165,53,0.28)',
+    title: 'Mot de passe trop simple',
+    sub: 'Ajoutez des chiffres, majuscules ou symboles pour le renforcer.'
+  },
+  {
+    label: 'Moyen',         color: '#f4a535',
+    icon: '🔐', bg: 'rgba(244,165,53,0.07)', border: 'rgba(244,165,53,0.25)',
+    title: 'Mot de passe acceptable',
+    sub: 'Allongez-le un peu et ajoutez un symbole pour être vraiment protégé.'
+  },
+  {
+    label: 'Fort',          color: '#3dba7a',
+    icon: '✅', bg: 'rgba(61,186,122,0.07)', border: 'rgba(61,186,122,0.28)',
+    title: 'Excellent mot de passe !',
+    sub: 'Ce mot de passe est solide. Pensez à en utiliser un différent pour chaque compte.'
+  },
+];
+
+// ── UPDATE ───────────────────────────────────────────────────────────────────
+function update() {
+  const pw = input.value;
+
+  // Criteria
+  setCrit('len',     pw.length >= 12);
+  setCrit('upper',   /[A-Z]/.test(pw));
+  setCrit('num',     /[0-9]/.test(pw));
+  setCrit('special', /[^A-Za-z0-9]/.test(pw));
+
+  const s = score(pw);
+
+  // Bars
+  const colors = ['#e05252', '#e07a35', '#f4a535', '#3dba7a'];
+  bars.forEach((b, i) => {
+    b.style.background = (pw && i < s) ? colors[s - 1] : 'var(--border)';
+  });
+
+  if (!pw) {
+    strengthTxt.textContent = '—';
+    strengthTxt.style.color = 'var(--text-muted)';
+    strengthSc.textContent  = '';
+    resetVerdict();
+    return;
+  }
+
+  const lvl = LEVELS[Math.max(1, s)];
+  strengthTxt.textContent = lvl.label;
+  strengthTxt.style.color = lvl.color;
+  strengthSc.textContent  = `${s} / 4`;
+
+  // Verdict
+  verdict.style.background   = lvl.bg;
+  verdict.style.borderColor  = lvl.border;
+  verdictIcon.textContent    = lvl.icon;
+  verdictTtl.textContent     = lvl.title;
+  verdictTtl.style.color     = lvl.color;
+  verdictSub.textContent     = lvl.sub;
+  verdictSub.style.color     = 'var(--text-muted)';
+}
+
+function setCrit(key, ok) {
+  crits[key].classList.toggle('ok', ok);
+}
+
+function resetVerdict() {
+  verdict.style.background  = 'transparent';
+  verdict.style.borderColor = 'var(--border)';
+  verdictIcon.textContent   = '🔓';
+  verdictTtl.textContent    = 'Entrez un mot de passe';
+  verdictTtl.style.color    = 'var(--text-muted)';
+  verdictSub.textContent    = 'Essayez les exemples ci-dessous pour commencer';
+}
+
+input.addEventListener('input', update);
+</script>
+</body>
+</html>

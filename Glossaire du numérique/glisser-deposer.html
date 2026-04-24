@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glisser-Déposer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #061d33;
+  --accent:      #60b2c8;
+  --accent-dim:  rgba(96,178,200,0.15);
+  --white:       #ffffff;
+  --muted:       rgba(255,255,255,0.42);
+  --border:      rgba(255,255,255,0.10);
+  --surface:     rgba(255,255,255,0.05);
+  --win-bg:      #f0f2f5;
+  --win-border:  #d0d5dd;
+  --win-text:    #1a2840;
+  --win-muted:   #7b8ba4;
+  --win-accent:  #0078d4;
+  --win-hover:   rgba(0,120,212,0.08);
+  --win-select:  rgba(0,120,212,0.15);
+  --success:     #3dba7a;
+}
+
+html, body {
+  width: 100%; height: 98%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--white);
+  user-select: none;
+}
+
+/* ═══════════════════════════════
+   LAYOUT
+═══════════════════════════════ */
+.layout {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 28px;
+}
+
+/* ── STATUS BAR (bottom of explorer) ── */
+.instruction {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #e8ecf1;
+  border-top: 1px solid var(--win-border);
+  flex-shrink: 0;
+  transition: background 0.35s;
+}
+
+.instruction.success {
+  background: rgba(61,186,122,0.12);
+}
+
+.instr-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.instr-text { flex: 1; }
+
+.instr-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--win-text);
+  line-height: 1.3;
+}
+
+.instr-sub {
+  font-size: 0.7rem;
+  color: var(--win-muted);
+  margin-top: 1px;
+}
+
+.instr-progress {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.instr-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--win-border);
+  transition: all 0.3s cubic-bezier(.34,1.4,.64,1);
+}
+
+.instr-dot.done { background: var(--success); }
+
+/* ═══════════════════════════════
+   EXPLORER WINDOW
+═══════════════════════════════ */
+.explorer {
+  background: var(--win-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  min-height: 0;
+}
+
+/* Title bar */
+.title-bar {
+  background: #e4e8ee;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  border-bottom: 1px solid var(--win-border);
+  flex-shrink: 0;
+}
+
+.tb-dots { display: flex; gap: 6px; }
+.tb-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+}
+
+.tb-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--win-muted);
+  flex: 1;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* Toolbar */
+.toolbar {
+  background: #eaecf0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 6px;
+  border-bottom: 1px solid var(--win-border);
+  flex-shrink: 0;
+}
+
+.tb-btn {
+  font-size: 0.7rem;
+  color: var(--win-muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.tb-path {
+  flex: 1;
+  height: 20px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid var(--win-border);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--win-muted);
+}
+
+.tb-path-sep { color: var(--win-border); }
+
+/* Main area */
+.explorer-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pane + .pane {
+  border-left: 1px solid var(--win-border);
+}
+
+/* Pane header */
+.pane-header {
+  background: #e8ecf1;
+  padding: 7px 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--win-muted);
+  border-bottom: 1px solid var(--win-border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Files grid */
+.pane-content {
+  flex: 1;
+  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: flex-start;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ═══════════════════════════════
+   FILE ITEMS
+═══════════════════════════════ */
+.file-item {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 4px 6px;
+  border-radius: 8px;
+  cursor: grab;
+  transition: background 0.12s, opacity 0.2s, transform 0.15s;
+  position: relative;
+  border: 1.5px solid transparent;
+}
+
+.file-item:hover {
+  background: var(--win-hover);
+}
+
+.file-item.selected {
+  background: var(--win-select);
+  border-color: rgba(0,120,212,0.5);
+  box-shadow: 0 0 0 1px rgba(0,120,212,0.2);
+}
+
+/* Selection rectangle */
+.select-rect {
+  position: absolute;
+  border: 1.5px solid var(--win-accent);
+  background: rgba(0,120,212,0.08);
+  pointer-events: none;
+  z-index: 10;
+  display: none;
+}
+.select-rect.show { display: block; }
+
+.file-item.dragging {
+  opacity: 0.35;
+  transform: scale(0.95);
+}
+
+.file-icon {
+  font-size: 2rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.file-name {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--win-text);
+  text-align: center;
+  line-height: 1.3;
+  pointer-events: none;
+  word-break: break-word;
+  max-width: 68px;
+}
+
+/* ═══════════════════════════════
+   FOLDER DROP TARGET
+═══════════════════════════════ */
+.folder-target {
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  border-radius: 10px;
+  border: 2px dashed var(--win-border);
+  transition: all 0.2s;
+  position: relative;
+}
+
+.folder-target.drag-over {
+  border-color: var(--win-accent);
+  background: rgba(0,120,212,0.07);
+  transform: scale(1.04);
+}
+
+.folder-target.completed {
+  border-color: #3dba7a;
+  border-style: solid;
+  background: rgba(61,186,122,0.07);
+}
+
+.folder-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+
+.folder-target.drag-over .folder-icon {
+  transform: scale(1.1);
+}
+
+.folder-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--win-text);
+  text-align: center;
+  pointer-events: none;
+}
+
+.folder-count {
+  font-size: 0.6rem;
+  color: var(--win-muted);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════
+   GHOST (element being dragged)
+═══════════════════════════════ */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.92;
+  transition: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  padding: 8px 10px 6px;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+  border: 1.5px solid rgba(0,120,212,0.3);
+  min-width: 72px;
+  display: none;
+}
+
+.drag-ghost.show { display: flex; }
+
+.ghost-icon { font-size: 2rem; line-height: 1; }
+.ghost-name { font-size: 0.62rem; font-weight: 500; color: var(--win-text); text-align: center; }
+
+/* Badge multi-sélection */
+.ghost-badge {
+  position: absolute;
+  top: -8px; right: -8px;
+  background: var(--win-accent);
+  color: white;
+  font-size: 0.62rem;
+  font-weight: 700;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ═══════════════════════════════
+   DROP FEEDBACK FLASH
+═══════════════════════════════ */
+.drop-flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(61,186,122,0.12);
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.drop-flash.show { opacity: 1; }
+
+/* ═══════════════════════════════
+   PLACED FILES (in right pane)
+═══════════════════════════════ */
+.placed-file {
+  width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 4px 5px;
+  border-radius: 7px;
+  animation: fileIn 0.3s cubic-bezier(.34,1.4,.64,1) both;
+}
+
+@keyframes fileIn {
+  from { opacity: 0; transform: scale(0.7) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.placed-icon { font-size: 1.8rem; line-height: 1; }
+.placed-name { font-size: 0.6rem; font-weight: 500; color: var(--win-text); text-align: center; }
+
+/* ═══════════════════════════════
+   EMPTY STATE
+═══════════════════════════════ */
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.empty-state-icon { font-size: 2rem; }
+.empty-state-text { font-size: 0.72rem; color: var(--win-muted); text-align: center; line-height: 1.4; }
+
+/* ═══════════════════════════════
+   SUCCESS OVERLAY
+═══════════════════════════════ */
+.success-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(240,242,245,0.95);
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.success-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.success-circle {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--success);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 0 4px 20px rgba(61,186,122,0.4);
+  transform: scale(0);
+  transition: transform 0.4s cubic-bezier(.34,1.56,.64,1) 0.15s;
+}
+
+.success-overlay.show .success-circle { transform: scale(1); }
+
+.success-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--win-text);
+}
+
+.success-sub {
+  font-size: 0.78rem;
+  color: var(--win-muted);
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.4;
+}
+
+.reset-btn {
+  margin-top: 4px;
+  background: transparent;
+  border: 1.5px solid var(--win-border);
+  color: var(--win-muted);
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-btn:hover { border-color: var(--win-accent); color: var(--win-accent); }
+</style>
+</head>
+<body>
+
+<!-- Ghost element -->
+<div class="drag-ghost" id="dragGhost">
+  <div class="ghost-icon" id="ghostIcon"></div>
+  <div class="ghost-name" id="ghostName"></div>
+  <div class="ghost-badge" id="ghostBadge" style="display:none"></div>
+</div>
+
+<div class="layout">
+
+  <!-- Explorer -->
+  <div class="explorer" id="explorer">
+
+    <!-- Title bar -->
+    <div class="title-bar">
+      <div class="tb-dots"></div>
+      <div class="tb-title">Explorateur de fichiers</div>
+      <span style="font-size:0.85rem;color:rgba(0,0,0,0.35);cursor:default;font-weight:500;line-height:1;">✕</span>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="tb-btn">← Retour</div>
+      <div class="tb-btn">→ Avant</div>
+      <div class="tb-path">
+        <span>Ce PC</span>
+        <span class="tb-path-sep">›</span>
+        <span>Documents</span>
+        <span class="tb-path-sep">›</span>
+        <span style="color:#0078d4;font-weight:600;">Mes fichiers</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="explorer-body" style="position:relative;">
+
+      <!-- Left pane — source -->
+      <div class="pane">
+        <div class="pane-header">
+          📂 Fichiers à ranger
+        </div>
+        <div class="pane-content" id="sourcePane">
+          <div class="select-rect" id="selectRect"></div>
+          <!-- Files injected by JS -->
+        </div>
+      </div>
+
+      <!-- Right pane — destination folders -->
+      <div class="pane">
+        <div class="pane-header">
+          🗂 Dossiers de destination
+        </div>
+        <div class="pane-content" id="destPane">
+          <!-- Folders injected by JS -->
+        </div>
+      </div>
+
+      <!-- Success overlay -->
+      <div class="success-overlay" id="successOverlay">
+        <div class="success-circle">✓</div>
+        <div class="success-title">Tous les fichiers sont rangés !</div>
+        <div class="success-sub">Vous maîtrisez le glisser-déposer. Chaque fichier est maintenant dans le bon dossier.</div>
+        <button class="reset-btn" onclick="resetAll()">↩ Recommencer</button>
+      </div>
+
+    </div>
+
+    <!-- Status bar / instruction -->
+    <div class="instruction" id="instruction">
+      <span class="instr-icon" id="instrIcon">👆</span>
+      <div class="instr-text">
+        <div class="instr-title" id="instrTitle">Glissez les fichiers dans le bon dossier</div>
+        <div class="instr-sub" id="instrSub">Cliquez sur un fichier, maintenez appuyé, déplacez-le vers le dossier correspondant, puis relâchez</div>
+      </div>
+      <div class="instr-progress" id="instrProgress"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────────
+const FILES = [
+  { id: 'f1',  icon: '🖼️', name: 'vacances.jpg',      folder: 'photos' },
+  { id: 'f2',  icon: '🖼️', name: 'anniversaire.jpg',  folder: 'photos' },
+  { id: 'f3',  icon: '📄', name: 'facture.pdf',        folder: 'documents' },
+  { id: 'f4',  icon: '📄', name: 'contrat.pdf',        folder: 'documents' },
+  { id: 'f5',  icon: '🎵', name: 'chanson.mp3',        folder: 'musique' },
+  { id: 'f6',  icon: '🖼️', name: 'plage_2024.jpg',    folder: 'photos' },
+  { id: 'f7',  icon: '🖼️', name: 'portrait.png',      folder: 'photos' },
+  { id: 'f8',  icon: '🖼️', name: 'coucher_soleil.jpg',folder: 'photos' },
+  { id: 'f9',  icon: '🖼️', name: 'famille.jpg',       folder: 'photos' },
+  { id: 'f10', icon: '📄', name: 'rapport_Q3.pdf',     folder: 'documents' },
+  { id: 'f11', icon: '📄', name: 'cv_2024.docx',       folder: 'documents' },
+  { id: 'f12', icon: '📄', name: 'notes_reunion.txt',  folder: 'documents' },
+  { id: 'f13', icon: '🎵', name: 'podcast_ep12.mp3',   folder: 'musique' },
+  { id: 'f14', icon: '🎵', name: 'playlist_été.m3u',   folder: 'musique' },
+  { id: 'f15', icon: '🎵', name: 'ambiance.wav',       folder: 'musique' },
+];
+
+const FOLDERS = [
+  { id: 'photos',    icon: '🖼️', name: 'Photos',    color: '#f59e0b' },
+  { id: 'documents', icon: '📁', name: 'Documents',  color: '#3b82f6' },
+  { id: 'musique',   icon: '🎵', name: 'Musique',    color: '#8b5cf6' },
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let dragging      = null;   // { fileIds[], primaryFile, el, offsetX, offsetY }
+let placed        = {};     // { fileId: folderId }
+let selected      = new Set(); // currently selected fileIds
+let lastClicked   = null;   // fileId of last clicked item (for Shift range)
+let totalFiles    = FILES.length;
+
+// Lasso state
+let lasso = null; // { startX, startY, paneRect }
+
+// ─── ELEMENTS ──────────────────────────────────────────────────────────────────
+const sourcePane  = document.getElementById('sourcePane');
+const destPane    = document.getElementById('destPane');
+const ghost       = document.getElementById('dragGhost');
+const ghostIcon   = document.getElementById('ghostIcon');
+const ghostName   = document.getElementById('ghostName');
+const ghostBadge  = document.getElementById('ghostBadge');
+const instrIcon   = document.getElementById('instrIcon');
+const instrTitle  = document.getElementById('instrTitle');
+const instrSub    = document.getElementById('instrSub');
+const instr       = document.getElementById('instruction');
+const progress    = document.getElementById('instrProgress');
+const selectRect  = document.getElementById('selectRect');
+
+// ─── BUILD UI ──────────────────────────────────────────────────────────────────
+function buildUI() {
+  // Keep the selectRect element, rebuild the rest
+  sourcePane.innerHTML = '';
+  sourcePane.appendChild(selectRect);
+  destPane.innerHTML   = '';
+  placed    = {};
+  selected  = new Set();
+  lastClicked = null;
+
+  // Progress dots
+  progress.innerHTML = FILES.map(f =>
+    `<div class="instr-dot" id="dot-${f.id}"></div>`
+  ).join('');
+
+  // Files
+  FILES.forEach(f => {
+    const el = document.createElement('div');
+    el.className   = 'file-item';
+    el.id          = 'file-' + f.id;
+    el.dataset.id  = f.id;
+    el.innerHTML   = `<div class="file-icon">${f.icon}</div><div class="file-name">${f.name}</div>`;
+    sourcePane.appendChild(el);
+    initFileEvents(el, f);
+  });
+
+  // Folders
+  FOLDERS.forEach(folder => {
+    const el = document.createElement('div');
+    el.className  = 'folder-target';
+    el.id         = 'folder-' + folder.id;
+    el.dataset.id = folder.id;
+    el.innerHTML  = `
+      <div class="folder-icon">${folder.icon}</div>
+      <div class="folder-name">${folder.name}</div>
+      <div class="folder-count" id="count-${folder.id}">0 fichier</div>
+      <div class="drop-flash" id="flash-${folder.id}"></div>
+    `;
+    destPane.appendChild(el);
+    initDrop(el, folder);
+  });
+
+  updateInstrSubHint();
+}
+
+// ─── FILE EVENTS (click selection + drag start) ────────────────────────────────
+function initFileEvents(el, file) {
+  el.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const id = file.id;
+
+    // ── Ctrl+clic : bascule la sélection de cet élément ──
+    if (e.ctrlKey || e.metaKey) {
+      if (selected.has(id)) {
+        selected.delete(id);
+        el.classList.remove('selected');
+      } else {
+        selected.add(id);
+        el.classList.add('selected');
+      }
+      lastClicked = id;
+      updateInstrSubHint();
+      return; // pas de drag
+    }
+
+    // ── Maj+clic : sélection en plage depuis lastClicked ──
+    if (e.shiftKey && lastClicked) {
+      const visibleIds = getVisibleFileIds();
+      const from = visibleIds.indexOf(lastClicked);
+      const to   = visibleIds.indexOf(id);
+      if (from !== -1 && to !== -1) {
+        const [start, end] = from < to ? [from, to] : [to, from];
+        // On ne réinitialise pas la sélection existante (comme Windows avec Maj)
+        for (let i = start; i <= end; i++) {
+          const fid = visibleIds[i];
+          selected.add(fid);
+          const fel = document.getElementById('file-' + fid);
+          if (fel) fel.classList.add('selected');
+        }
+        updateInstrSubHint();
+        return; // pas de drag
+      }
+    }
+
+    // ── Clic simple : sélection unique + début de drag possible ──
+    if (!selected.has(id)) {
+      clearSelection();
+      selected.add(id);
+      el.classList.add('selected');
+    }
+    lastClicked = id;
+    updateInstrSubHint();
+
+    // Prépare le drag (déclenché sur mousemove)
+    const rect = el.getBoundingClientRect();
+    dragging = {
+      fileIds: [...selected],
+      primaryFile: file,
+      el,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - rect.left - rect.width / 2,
+      offsetY: e.clientY - rect.top  - rect.height / 2,
+      started: false,
+    };
+  });
+}
+
+// ─── LASSO (clic sur le fond du panneau) ──────────────────────────────────────
+sourcePane.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  if (e.target !== sourcePane) return; // uniquement sur le fond
+  e.preventDefault();
+
+  if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    clearSelection();
+  }
+
+  const paneRect = sourcePane.getBoundingClientRect();
+  lasso = {
+    startX: e.clientX - paneRect.left + sourcePane.scrollTop, // approximation
+    startY: e.clientY - paneRect.top  + sourcePane.scrollTop,
+    clientStartX: e.clientX,
+    clientStartY: e.clientY,
+    paneRect,
+  };
+  selectRect.classList.add('show');
+  updateLasso(e.clientX, e.clientY);
+});
+
+function updateLasso(cx, cy) {
+  if (!lasso) return;
+  const { clientStartX, clientStartY, paneRect } = lasso;
+  const x1 = Math.min(cx, clientStartX) - paneRect.left;
+  const y1 = Math.min(cy, clientStartY) - paneRect.top + sourcePane.scrollTop;
+  const x2 = Math.max(cx, clientStartX) - paneRect.left;
+  const y2 = Math.max(cy, clientStartY) - paneRect.top + sourcePane.scrollTop;
+  selectRect.style.left   = x1 + 'px';
+  selectRect.style.top    = y1 + 'px';
+  selectRect.style.width  = (x2 - x1) + 'px';
+  selectRect.style.height = (y2 - y1) + 'px';
+
+  // Sélectionne les fichiers dans la zone
+  document.querySelectorAll('.file-item').forEach(fel => {
+    const fr = fel.getBoundingClientRect();
+    const overlaps =
+      fr.left   < paneRect.left + x2 &&
+      fr.right  > paneRect.left + x1 &&
+      fr.top    < paneRect.top  + (y2 - sourcePane.scrollTop) &&
+      fr.bottom > paneRect.top  + (y1 - sourcePane.scrollTop);
+    if (overlaps) {
+      selected.add(fel.dataset.id);
+      fel.classList.add('selected');
+    } else if (!lasso.addMode) {
+      selected.delete(fel.dataset.id);
+      fel.classList.remove('selected');
+    }
+  });
+  updateInstrSubHint();
+}
+
+// ─── MOUSE MOVE ────────────────────────────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  // Lasso
+  if (lasso) {
+    updateLasso(e.clientX, e.clientY);
+    return;
+  }
+
+  if (!dragging) return;
+
+  // Démarrage effectif du drag (seuil 4px)
+  if (!dragging.started) {
+    const dx = Math.abs(e.clientX - dragging.startX);
+    const dy = Math.abs(e.clientY - dragging.startY);
+    if (dx < 4 && dy < 4) return;
+    dragging.started = true;
+
+    // Marque tous les éléments sélectionnés comme "en cours de drag"
+    dragging.fileIds.forEach(fid => {
+      const fel = document.getElementById('file-' + fid);
+      if (fel) fel.classList.add('dragging');
+    });
+
+    // Ghost
+    const count = dragging.fileIds.length;
+    ghostIcon.textContent = dragging.primaryFile.icon;
+    if (count > 1) {
+      ghostName.textContent        = `${count} fichiers`;
+      ghostBadge.textContent       = count;
+      ghostBadge.style.display     = 'flex';
+    } else {
+      ghostName.textContent    = dragging.primaryFile.name;
+      ghostBadge.style.display = 'none';
+    }
+    ghost.classList.add('show');
+    document.body.style.cursor = 'grabbing';
+  }
+
+  moveGhost(e.clientX, e.clientY);
+
+  // Highlight folder sous curseur
+  document.querySelectorAll('.folder-target').forEach(f => {
+    const r = f.getBoundingClientRect();
+    const over = e.clientX >= r.left && e.clientX <= r.right &&
+                 e.clientY >= r.top  && e.clientY <= r.bottom;
+    f.classList.toggle('drag-over', over);
+  });
+});
+
+function moveGhost(x, y) {
+  ghost.style.left = (x - 46) + 'px';
+  ghost.style.top  = (y - 52) + 'px';
+}
+
+// ─── MOUSE UP ──────────────────────────────────────────────────────────────────
+document.addEventListener('mouseup', e => {
+  // Fin du lasso
+  if (lasso) {
+    lasso = null;
+    selectRect.classList.remove('show');
+    return;
+  }
+
+  if (!dragging) return;
+
+  ghost.classList.remove('show');
+  document.body.style.cursor = '';
+
+  // Retire la classe dragging
+  dragging.fileIds.forEach(fid => {
+    const fel = document.getElementById('file-' + fid);
+    if (fel) fel.classList.remove('dragging');
+  });
+
+  if (!dragging.started) {
+    // Simple clic sans drag : sélection déjà gérée dans mousedown
+    dragging = null;
+    return;
+  }
+
+  // Trouve le dossier sous le curseur
+  let dropped = null;
+  document.querySelectorAll('.folder-target').forEach(f => {
+    const r = f.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right &&
+        e.clientY >= r.top  && e.clientY <= r.bottom) {
+      dropped = f.dataset.id;
+    }
+    f.classList.remove('drag-over');
+  });
+
+  const { fileIds, primaryFile, el } = dragging;
+  dragging = null;
+
+  if (!dropped) return;
+
+  // Vérifie que TOUS les fichiers vont dans le bon dossier
+  const allCorrect = fileIds.every(fid => {
+    const f = FILES.find(x => x.id === fid);
+    return f && f.folder === dropped;
+  });
+
+  if (allCorrect) {
+    fileIds.forEach(fid => {
+      const f = FILES.find(x => x.id === fid);
+      if (f) placeFile(fid, f, dropped);
+    });
+    selected = new Set();
+  } else {
+    // Shake tous les fichiers mal déposés
+    fileIds.forEach(fid => {
+      const fel = document.getElementById('file-' + fid);
+      if (fel) {
+        fel.style.transition = 'transform 0.15s';
+        fel.style.transform  = 'translateX(-8px)';
+        setTimeout(() => { fel.style.transform = 'translateX(8px)'; }, 150);
+        setTimeout(() => { fel.style.transform = 'translateX(0)'; fel.style.transition = ''; }, 300);
+      }
+    });
+    showWrongMsg(fileIds.length > 1);
+  }
+});
+
+// ─── CLEAR SELECTION ───────────────────────────────────────────────────────────
+function clearSelection() {
+  selected.forEach(id => {
+    const el = document.getElementById('file-' + id);
+    if (el) el.classList.remove('selected');
+  });
+  selected.clear();
+}
+
+// ─── VISIBLE FILE IDS (order in DOM) ──────────────────────────────────────────
+function getVisibleFileIds() {
+  return [...document.querySelectorAll('.file-item')].map(el => el.dataset.id);
+}
+
+// ─── DROP INIT ─────────────────────────────────────────────────────────────────
+function initDrop(el, folder) {
+  el.addEventListener('mouseenter', () => {
+    if (!dragging || !dragging.started) return;
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('mouseleave', () => {
+    el.classList.remove('drag-over');
+  });
+}
+
+// ─── PLACE FILE ────────────────────────────────────────────────────────────────
+function placeFile(fileId, file, folderId) {
+  placed[fileId] = folderId;
+
+  const srcEl = document.getElementById('file-' + fileId);
+  if (srcEl) {
+    srcEl.style.transition = 'opacity 0.2s, transform 0.2s';
+    srcEl.style.opacity    = '0';
+    srcEl.style.transform  = 'scale(0.8)';
+    setTimeout(() => srcEl.remove(), 200);
+  }
+
+  const folderCount = Object.values(placed).filter(f => f === folderId).length;
+  const countEl = document.getElementById('count-' + folderId);
+  if (countEl) countEl.textContent = folderCount + (folderCount > 1 ? ' fichiers' : ' fichier');
+
+  const flash = document.getElementById('flash-' + folderId);
+  if (flash) {
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 400);
+  }
+
+  const folderEl = document.getElementById('folder-' + folderId);
+  if (folderEl) folderEl.classList.add('completed');
+
+  const dot = document.getElementById('dot-' + fileId);
+  if (dot) dot.classList.add('done');
+
+  updateInstruction();
+
+  if (Object.keys(placed).length === totalFiles) {
+    setTimeout(() => {
+      document.getElementById('successOverlay').classList.add('show');
+      instr.classList.add('success');
+      instrIcon.textContent  = '🎉';
+      instrTitle.textContent = 'Tous les fichiers sont rangés !';
+      instrSub.textContent   = 'Vous maîtrisez le glisser-déposer.';
+    }, 500);
+  }
+}
+
+// ─── INSTRUCTION UPDATE ────────────────────────────────────────────────────────
+function updateInstruction() {
+  const n = Object.keys(placed).length;
+  if (n === 0 || n === totalFiles) return;
+  const remaining = totalFiles - n;
+  instrTitle.textContent = `Encore ${remaining} fichier${remaining > 1 ? 's' : ''} à ranger`;
+  instrSub.textContent   = 'Continuez — glissez les fichiers restants dans le bon dossier';
+}
+
+function updateInstrSubHint() {
+  const n = selected.size;
+  const placed_n = Object.keys(placed).length;
+  if (placed_n === totalFiles) return;
+  if (n === 0) {
+    instrTitle.textContent = placed_n > 0
+      ? `Encore ${totalFiles - placed_n} fichier${totalFiles - placed_n > 1 ? 's' : ''} à ranger`
+      : 'Glissez les fichiers dans le bon dossier';
+    instrSub.textContent = 'Ctrl+clic pour sélectionner plusieurs fichiers · Maj+clic pour une plage';
+  } else if (n === 1) {
+    instrTitle.textContent = '1 fichier sélectionné';
+    instrSub.textContent   = 'Glissez-le dans le bon dossier · Ctrl+clic pour en ajouter d\'autres';
+  } else {
+    instrTitle.textContent = `${n} fichiers sélectionnés`;
+    instrSub.textContent   = 'Glissez la sélection dans le bon dossier';
+  }
+}
+
+function showWrongMsg(multi) {
+  const prev = instrTitle.textContent;
+  instrTitle.textContent = multi
+    ? '⚠️ Ces fichiers n\'appartiennent pas tous à ce dossier !'
+    : '⚠️ Mauvais dossier — réessayez !';
+  instrSub.textContent   = 'Chaque fichier a un dossier qui lui correspond.';
+  setTimeout(() => {
+    instrTitle.textContent = prev;
+    instrSub.textContent   = 'Ctrl+clic pour sélectionner plusieurs fichiers · Maj+clic pour une plage';
+  }, 1800);
+}
+
+// ─── RESET ─────────────────────────────────────────────────────────────────────
+function resetAll() {
+  document.getElementById('successOverlay').classList.remove('show');
+  instr.classList.remove('success');
+  instrIcon.textContent  = '👆';
+  instrTitle.textContent = 'Glissez les fichiers dans le bon dossier';
+  instrSub.textContent   = 'Ctrl+clic pour sélectionner plusieurs fichiers · Maj+clic pour une plage';
+  buildUI();
+}
+
+// Désélectionner en cliquant ailleurs (hors fichier)
+document.addEventListener('mousedown', e => {
+  if (e.target.closest('.file-item')) return;
+  if (e.target === sourcePane) return; // géré par le lasso
+  clearSelection();
+  updateInstrSubHint();
+});
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+buildUI();
+</script>
+</body>
+</html>
