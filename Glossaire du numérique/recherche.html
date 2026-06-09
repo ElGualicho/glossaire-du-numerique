@@ -9,7 +9,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:         #061d33;
+  --bg:         #094D70;
   --accent:     #60b2c8;
   --white:      #ffffff;
   --muted:      rgba(255,255,255,0.45);
@@ -951,7 +951,7 @@ function showWebsite(r, url) {
     setTimeout(() => {
       document.getElementById('instText').innerHTML =
         '<strong style="color:var(--accent)">Bravo !</strong> Vous savez maintenant utiliser la barre de recherche. ' +
-        '<button onclick="restart()" style="background:var(--accent);color:#061d33;border:none;padding:3px 12px;border-radius:20px;font-family:Inter,sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer;margin-left:8px;">↩ Recommencer</button>';
+        '<button onclick="restart()" style="background:var(--accent);color:#094D70;border:none;padding:3px 12px;border-radius:20px;font-family:Inter,sans-serif;font-size:0.76rem;font-weight:700;cursor:pointer;margin-left:8px;">↩ Recommencer</button>';
       document.getElementById('instIcon').textContent = '🎉';
       for (let i = 0; i < 4; i++) document.getElementById('sd'+i).className = 'sdot done';
 

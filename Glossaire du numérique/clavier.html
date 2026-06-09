@@ -9,7 +9,7 @@
   <style>
 /* ─── VARIABLES ─────────────────────────────────────────────── */
 :root {
-  --keyboard-bg-color: #061d33;
+  --keyboard-bg-color: #094D70;
   --key-bg-color:      #0d2e4e;
   --key-border-color:  rgba(96, 178, 200, 0.25);
   --key-color:         #e8f4f8;
@@ -30,8 +30,8 @@ body {
   min-height: auto;
   display: block;
 }
-::selection      { background-color: var(--accent); color: #061d33; }
-::-moz-selection { background-color: var(--accent); color: #061d33; }
+::selection      { background-color: var(--accent); color: #094D70; }
+::-moz-selection { background-color: var(--accent); color: #094D70; }
 
 /* ─── SCROLLBAR ─────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -73,9 +73,9 @@ body {
 .key:hover, .key-press {
   cursor: pointer; background: #ffffff; border-color: #ffffff;
   box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
-  transform: translateY(2px); color: #061d33;
+  transform: translateY(2px); color: #094D70;
 }
-.key:hover span, .key-press span { color: #061d33; }
+.key:hover span, .key-press span { color: #094D70; }
 
 .key.shift:hover, .key.shift.key-press,
 kbd[data-key="17"]:hover, kbd[data-key="17"].key-press,
@@ -88,7 +88,7 @@ kbd[data-key="13"]:hover, kbd[data-key="13"].key-press,
 kbd[data-key="27"]:hover, kbd[data-key="27"].key-press,
 kbd[data-key="32"]:hover, kbd[data-key="32"].key-press {
   background: #ffffff !important; border-color: #ffffff !important;
-  color: #061d33 !important; box-shadow: 0 2px 0 rgba(0,0,0,0.4) !important;
+  color: #094D70 !important; box-shadow: 0 2px 0 rgba(0,0,0,0.4) !important;
 }
 .key-empty { background: transparent !important; border: none !important; box-shadow: none !important; }
 
@@ -174,7 +174,7 @@ kbd[data-key="27"]:hover {
   position: fixed; z-index: 9999; pointer-events: none;
   opacity: 0; transform: translateY(6px);
   transition: opacity 0.18s ease, transform 0.18s ease;
-  background: #061d33; border: 1.5px solid #60b2c8;
+  background: #094D70; border: 1.5px solid #60b2c8;
   border-radius: 12px; padding: 10px 14px; max-width: 240px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.55);
   font-family: 'Varela Round', sans-serif;
