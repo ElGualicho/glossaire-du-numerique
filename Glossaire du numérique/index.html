@@ -1755,6 +1755,13 @@ function highlightText(text, query) {
     text.slice(idx + query.length);
 }
 
+function renderEmptySearch(q) {
+  const empty = document.createElement('div');
+  empty.className = 'search-empty';
+  empty.textContent = `Aucun résultat pour « ${q} »`;
+  searchSuggs.replaceChildren(empty);
+}
+
 function renderSuggestions(q) {
   currentSuggs = getSuggestions(q);
   highlightIdx = -1;
@@ -1765,7 +1772,7 @@ function renderSuggestions(q) {
   }
 
   if (currentSuggs.length === 0) {
-    searchSuggs.innerHTML = `<div class="search-empty">Aucun résultat pour « ${q} »</div>`;
+    renderEmptySearch(q);
     searchSuggs.classList.add('open');
     return;
   }
