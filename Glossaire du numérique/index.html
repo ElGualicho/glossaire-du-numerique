@@ -1899,11 +1899,28 @@ window.addEventListener("message", (event) => {
     return rect.top < window.innerHeight && rect.bottom > 0;
   }
 
+  const scrollKeys = new Set([
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    'PageUp', 'PageDown', 'Home', 'End', 'Space'
+  ]);
+
+  function isInteractiveTarget(target) {
+    return target instanceof Element &&
+      !!target.closest('input, textarea, select, button, a[href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])');
+  }
+
+  function shouldPreventKeyboardDefault(e) {
+    if (e.defaultPrevented || e.key === 'Tab' || isInteractiveTarget(e.target)) return false;
+    if (e.ctrlKey || e.metaKey || (e.altKey && e.code !== 'AltRight')) return false;
+    return scrollKeys.has(e.code);
+  }
+
   function relay(type, e) {
     if (!isKeyboardVisible()) return;
 
-    // Bloquer TOUS les effets natifs du navigateur quand le clavier est visible
-    e.preventDefault();
+    if (type === 'keydown' && shouldPreventKeyboardDefault(e)) {
+      e.preventDefault();
+    }
 
     frame.contentWindow.postMessage({
       type: 'key-relay',
