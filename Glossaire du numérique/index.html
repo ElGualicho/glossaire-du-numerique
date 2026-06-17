@@ -9,12 +9,25 @@
     :root {
       --bg-dark: #094D70;
       --accent: #60b2c8;
+      --on-accent: #032536;
       --white: #ffffff;
       --main-align: 80px;
       --font-scale: 1;
     }
 
     * { box-sizing: border-box; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
     html {
       scroll-behavior: smooth;
@@ -71,7 +84,7 @@
       font-family: 'Inter', sans-serif;
     }
 
-    .btn-primary { background: var(--accent); color: var(--bg-dark); }
+    .btn-primary { background: var(--accent); color: var(--on-accent); }
     .btn-secondary { background: rgba(255,255,255,0.1); color: var(--white); border: 1px solid rgba(255,255,255,0.2); }
     .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
 
@@ -114,7 +127,7 @@
       transition: all 0.2s;
     }
     .cat-btn:hover { background: rgba(255,255,255,0.14); }
-    .cat-btn.active { background: var(--accent); border-color: var(--accent); color: #094D70; font-weight: 700; }
+    .cat-btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
 
     .cat-dropdown {
       display: none;
@@ -233,7 +246,7 @@
       transition: all 0.2s;
       line-height: 1;
     }
-    .font-btn.active { background: var(--accent); color: #094D70; }
+    .font-btn.active { background: var(--accent); color: var(--on-accent); }
     .font-btn:first-child { font-size: 0.75rem; }
     .font-btn:last-child { font-size: 1rem; }
 
@@ -415,7 +428,7 @@
 
     .bloc:has(.drag-video-demo) .bloc-label,
     .bloc:has(.drag-video-demo) .bloc-sub {
-      color: #094D70;
+      color: var(--on-accent);
     }
 
     .drag-video-demo {
@@ -790,10 +803,11 @@
       transform: translateY(0);
     }
 
-    .key-tooltip h3{
+    .key-tooltip .tooltip-title{
       margin: 0 0 6px 0;
       font-size: 18px;
       color: #60b2c8;
+      font-weight: 700;
     }
 
     .key-tooltip p{
@@ -847,11 +861,11 @@
     </iframe>
 
     <div class="key-tooltip" id="keyTooltip">
-      <h3 id="tooltipTitle"></h3>
+      <div class="tooltip-title" id="tooltipTitle"></div>
       <p id="tooltipText"></p>
     </div>
   </div>
-  <h1 class="keyboard-embed-title big-title" id="keyboardTitle">Le clavier</h1>
+  <h2 class="keyboard-embed-title big-title" id="keyboardTitle">Le clavier</h2>
 </section>
 
 <section class="glisser-section" id="glisserMemo">
@@ -863,7 +877,7 @@
       loading="lazy">
     </iframe>
   </div>
-  <h1 class="keyboard-embed-title big-title" id="glisserTitle">Glisser-Déposer</h1>
+  <h2 class="keyboard-embed-title big-title" id="glisserTitle">Glisser-Déposer</h2>
 </section>
 
 <section class="phishing-section" id="phishingMemo">
@@ -875,7 +889,7 @@
       loading="lazy">
     </iframe>
   </div>
-  <h1 class="keyboard-embed-title big-title" id="phishingTitle">Phishing</h1>
+  <h2 class="keyboard-embed-title big-title" id="phishingTitle">Phishing</h2>
 </section>
 
 <section class="recherche-section" id="rechercheMemo">
@@ -887,7 +901,7 @@
       loading="lazy">
     </iframe>
   </div>
-  <h1 class="keyboard-embed-title big-title" id="rechercheTitle">La Recherche</h1>
+  <h2 class="keyboard-embed-title big-title" id="rechercheTitle">La Recherche</h2>
 </section>
 
 <section class="cookie-section" id="cookieMemo">
@@ -899,7 +913,7 @@
       loading="lazy">
     </iframe>
   </div>
-  <h1 class="keyboard-embed-title big-title" id="cookieTitle">Les Cookies</h1>
+  <h2 class="keyboard-embed-title big-title" id="cookieTitle">Les Cookies</h2>
 </section>
 
 <header class="header" id="mainHeader">
@@ -912,6 +926,7 @@
 
     <div class="search-wrapper" id="searchWrapper">
       <form class="search-container" id="searchForm" autocomplete="off">
+        <label class="sr-only" for="searchInput">Rechercher un mot dans le glossaire</label>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="search" id="searchInput" placeholder="Rechercher un mot…" autocomplete="off" spellcheck="false">
         <button type="button" id="searchClear" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;display:none;font-size:1rem;padding:0;line-height:1;" title="Effacer">✕</button>
@@ -1616,7 +1631,7 @@ glossaire.forEach((item) => {
       <span class="category-tag">${item.catLabel}</span>
       ${blocsHTML}
     </div>
-    <h1 class="big-title">${item.t}</h1>
+    <h2 class="big-title">${item.t}</h2>
   `;
   container.appendChild(sec);
 });

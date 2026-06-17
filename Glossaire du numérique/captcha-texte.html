@@ -7,6 +7,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
   :root {
     --bg: #f4f6f9; --surface: #ffffff; --border: #dde3ec;
     --text: #1a2840; --text-muted: #7b8ba4;
@@ -115,14 +126,15 @@
     <div class="card">
       <div class="card-title">Recopiez le texte ci-dessous</div>
       <div class="canvas-wrap">
-        <canvas id="cap" width="284" height="76"></canvas>
-        <button class="refresh-btn" onclick="newCaptcha()" title="Nouveau code">↻</button>
+        <canvas id="cap" width="284" height="76" role="img" aria-label="Code visuel à recopier"></canvas>
+        <button class="refresh-btn" type="button" onclick="newCaptcha()" title="Nouveau code" aria-label="Générer un nouveau code">↻</button>
       </div>
       <div class="input-row">
+        <label class="sr-only" for="capInput">Texte du captcha</label>
         <input class="cap-input" id="capInput" type="text"
                placeholder="Saisir le texte…" autocomplete="off" spellcheck="false"
                oninput="resetFeedback()">
-        <button class="submit-btn" onclick="checkCaptcha()">Valider</button>
+        <button class="submit-btn" type="button" onclick="checkCaptcha()">Valider</button>
       </div>
       <div class="feedback" id="feedback"></div>
     </div>

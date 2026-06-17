@@ -8,6 +8,18 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   --bg:         #094D70;
   --accent:     #60b2c8;
@@ -546,6 +558,7 @@ html, body {
         <button class="nav-btn" id="btnRefresh">&#8635;</button>
         <div class="url-container pulse" id="urlContainer" onclick="onBarClick()">
           <span class="url-icon" id="urlIcon">🔍</span>
+          <label class="sr-only" for="urlInput">Adresse ou recherche web</label>
           <input  class="url-input" id="urlInput" type="text"
                   placeholder="Rechercher ou saisir une adresse web…"
                   autocomplete="off" spellcheck="false" readonly>

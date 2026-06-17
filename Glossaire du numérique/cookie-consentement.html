@@ -8,6 +8,18 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   --bg:        #094D70;
   --accent:    #60b2c8;
@@ -438,6 +450,7 @@ html, body {
               <div class="cat-desc">Comptent les visites et les pages consultées pour améliorer le site. Les données sont anonymisées.</div>
             </div>
             <label class="tgl" title="Activer la mesure d'audience">
+              <span class="sr-only">Activer la mesure d'audience</span>
               <input type="checkbox" id="togStats">
               <span class="tgl-track"><span class="tgl-thumb"></span></span>
             </label>
@@ -449,6 +462,7 @@ html, body {
               <div class="cat-desc">Permettent de vous montrer des publicités adaptées à vos centres d'intérêt sur ce site et sur d'autres sites.</div>
             </div>
             <label class="tgl" title="Activer la publicité personnalisée">
+              <span class="sr-only">Activer la publicité personnalisée</span>
               <input type="checkbox" id="togAds">
               <span class="tgl-track"><span class="tgl-thumb"></span></span>
             </label>
@@ -460,6 +474,7 @@ html, body {
               <div class="cat-desc">Permettent de partager des articles sur Facebook, Twitter, etc. Ces plateformes peuvent vous identifier.</div>
             </div>
             <label class="tgl" title="Activer les réseaux sociaux">
+              <span class="sr-only">Activer les réseaux sociaux</span>
               <input type="checkbox" id="togSocial">
               <span class="tgl-track"><span class="tgl-thumb"></span></span>
             </label>

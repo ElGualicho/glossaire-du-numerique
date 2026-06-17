@@ -8,6 +8,18 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   --bg:          #094D70;
   --accent:      #60b2c8;
@@ -235,10 +247,18 @@ html, body {
   transition: background 0.12s, opacity 0.2s, transform 0.15s;
   position: relative;
   border: 1.5px solid transparent;
+  touch-action: none;
 }
 
 .file-item:hover {
   background: var(--win-hover);
+}
+
+.file-item:focus-visible,
+.folder-target:focus-visible,
+.reset-btn:focus-visible {
+  outline: 3px solid var(--win-accent);
+  outline-offset: 2px;
 }
 
 .file-item.selected {
@@ -294,6 +314,7 @@ html, body {
   border: 2px dashed var(--win-border);
   transition: all 0.2s;
   position: relative;
+  touch-action: none;
 }
 
 .folder-target.drag-over {
@@ -496,6 +517,8 @@ html, body {
 </head>
 <body>
 
+<p class="sr-only" id="dragKeyboardHelp">Sélectionnez un fichier avec Entrée ou Espace, puis choisissez un dossier avec Tab et appuyez sur Entrée ou Espace pour le ranger.</p>
+
 <!-- Ghost element -->
 <div class="drag-ghost" id="dragGhost">
   <div class="ghost-icon" id="ghostIcon"></div>
@@ -536,7 +559,7 @@ html, body {
         <div class="pane-header">
           📂 Fichiers à ranger
         </div>
-        <div class="pane-content" id="sourcePane">
+        <div class="pane-content" id="sourcePane" role="listbox" aria-label="Fichiers à ranger" aria-describedby="dragKeyboardHelp" aria-multiselectable="true">
           <div class="select-rect" id="selectRect"></div>
           <!-- Files injected by JS -->
         </div>
@@ -547,7 +570,7 @@ html, body {
         <div class="pane-header">
           🗂 Dossiers de destination
         </div>
-        <div class="pane-content" id="destPane">
+        <div class="pane-content" id="destPane" role="group" aria-label="Dossiers de destination" aria-describedby="dragKeyboardHelp">
           <!-- Folders injected by JS -->
         </div>
       </div>
@@ -563,11 +586,11 @@ html, body {
     </div>
 
     <!-- Status bar / instruction -->
-    <div class="instruction" id="instruction">
+    <div class="instruction" id="instruction" role="status" aria-live="polite">
       <span class="instr-icon" id="instrIcon">👆</span>
       <div class="instr-text">
         <div class="instr-title" id="instrTitle">Glissez les fichiers dans le bon dossier</div>
-        <div class="instr-sub" id="instrSub">Cliquez sur un fichier, maintenez appuyé, déplacez-le vers le dossier correspondant, puis relâchez</div>
+        <div class="instr-sub" id="instrSub">Glissez un fichier, ou sélectionnez-le avec Entrée/Espace puis validez le dossier au clavier</div>
       </div>
       <div class="instr-progress" id="instrProgress"></div>
     </div>
@@ -626,6 +649,26 @@ const instr       = document.getElementById('instruction');
 const progress    = document.getElementById('instrProgress');
 const selectRect  = document.getElementById('selectRect');
 
+function folderName(folderId) {
+  return (FOLDERS.find(f => f.id === folderId) || {}).name || folderId;
+}
+
+function updateFolderAria(folderId) {
+  const el = document.getElementById('folder-' + folderId);
+  if (!el) return;
+  const count = Object.values(placed).filter(f => f === folderId).length;
+  const label = count > 0
+    ? `Dossier ${folderName(folderId)}, ${count} fichier${count > 1 ? 's' : ''} rangé${count > 1 ? 's' : ''}`
+    : `Dossier ${folderName(folderId)}`;
+  el.setAttribute('aria-label', label);
+}
+
+function syncSelectionAria() {
+  document.querySelectorAll('.file-item').forEach(el => {
+    el.setAttribute('aria-selected', selected.has(el.dataset.id) ? 'true' : 'false');
+  });
+}
+
 // ─── BUILD UI ──────────────────────────────────────────────────────────────────
 function buildUI() {
   // Keep the selectRect element, rebuild the rest
@@ -647,6 +690,10 @@ function buildUI() {
     el.className   = 'file-item';
     el.id          = 'file-' + f.id;
     el.dataset.id  = f.id;
+    el.tabIndex    = 0;
+    el.setAttribute('role', 'option');
+    el.setAttribute('aria-selected', 'false');
+    el.setAttribute('aria-label', `Fichier ${f.name}`);
     el.innerHTML   = `<div class="file-icon">${f.icon}</div><div class="file-name">${f.name}</div>`;
     sourcePane.appendChild(el);
     initFileEvents(el, f);
@@ -658,6 +705,8 @@ function buildUI() {
     el.className  = 'folder-target';
     el.id         = 'folder-' + folder.id;
     el.dataset.id = folder.id;
+    el.tabIndex   = 0;
+    el.setAttribute('role', 'button');
     el.innerHTML  = `
       <div class="folder-icon">${folder.icon}</div>
       <div class="folder-name">${folder.name}</div>
@@ -665,6 +714,7 @@ function buildUI() {
       <div class="drop-flash" id="flash-${folder.id}"></div>
     `;
     destPane.appendChild(el);
+    updateFolderAria(folder.id);
     initDrop(el, folder);
   });
 
@@ -735,6 +785,58 @@ function initFileEvents(el, file) {
       started: false,
     };
   });
+
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+
+    const id = file.id;
+
+    if (e.ctrlKey || e.metaKey) {
+      if (selected.has(id)) {
+        selected.delete(id);
+        el.classList.remove('selected');
+      } else {
+        selected.add(id);
+        el.classList.add('selected');
+      }
+    } else {
+      clearSelection();
+      selected.add(id);
+      el.classList.add('selected');
+    }
+
+    lastClicked = id;
+    updateInstrSubHint();
+  });
+
+  el.addEventListener('touchstart', e => {
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const id = file.id;
+    if (!selected.has(id)) {
+      clearSelection();
+      selected.add(id);
+      el.classList.add('selected');
+    }
+    lastClicked = id;
+    updateInstrSubHint();
+
+    const rect = el.getBoundingClientRect();
+    dragging = {
+      fileIds: [...selected],
+      primaryFile: file,
+      el,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      offsetX: touch.clientX - rect.left - rect.width / 2,
+      offsetY: touch.clientY - rect.top  - rect.height / 2,
+      started: false,
+    };
+  }, { passive: false });
 }
 
 // ─── LASSO (clic sur le fond du panneau) ──────────────────────────────────────
@@ -839,6 +941,46 @@ document.addEventListener('mousemove', e => {
   });
 });
 
+document.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  const touch = e.changedTouches[0];
+  if (!touch) return;
+  e.preventDefault();
+
+  if (!dragging.started) {
+    const dx = Math.abs(touch.clientX - dragging.startX);
+    const dy = Math.abs(touch.clientY - dragging.startY);
+    if (dx < 4 && dy < 4) return;
+    dragging.started = true;
+
+    dragging.fileIds.forEach(fid => {
+      const fel = document.getElementById('file-' + fid);
+      if (fel) fel.classList.add('dragging');
+    });
+
+    const count = dragging.fileIds.length;
+    ghostIcon.textContent = dragging.primaryFile.icon;
+    if (count > 1) {
+      ghostName.textContent = `${count} fichiers`;
+      ghostBadge.textContent = count;
+      ghostBadge.style.display = 'flex';
+    } else {
+      ghostName.textContent = dragging.primaryFile.name;
+      ghostBadge.style.display = 'none';
+    }
+    ghost.classList.add('show');
+  }
+
+  moveGhost(touch.clientX, touch.clientY);
+
+  document.querySelectorAll('.folder-target').forEach(f => {
+    const r = f.getBoundingClientRect();
+    const over = touch.clientX >= r.left && touch.clientX <= r.right &&
+                 touch.clientY >= r.top  && touch.clientY <= r.bottom;
+    f.classList.toggle('drag-over', over);
+  });
+}, { passive: false });
+
 function moveGhost(x, y) {
   ghost.style.left = (x - 46) + 'px';
   ghost.style.top  = (y - 52) + 'px';
@@ -886,6 +1028,58 @@ document.addEventListener('mouseup', e => {
 
   if (!dropped) return;
 
+  placeFileIds(fileIds, dropped);
+});
+
+document.addEventListener('touchend', e => {
+  if (!dragging) return;
+  const touch = e.changedTouches[0];
+  if (!touch) return;
+  e.preventDefault();
+
+  ghost.classList.remove('show');
+
+  dragging.fileIds.forEach(fid => {
+    const fel = document.getElementById('file-' + fid);
+    if (fel) fel.classList.remove('dragging');
+  });
+
+  if (!dragging.started) {
+    dragging = null;
+    return;
+  }
+
+  let dropped = null;
+  document.querySelectorAll('.folder-target').forEach(f => {
+    const r = f.getBoundingClientRect();
+    if (touch.clientX >= r.left && touch.clientX <= r.right &&
+        touch.clientY >= r.top  && touch.clientY <= r.bottom) {
+      dropped = f.dataset.id;
+    }
+    f.classList.remove('drag-over');
+  });
+
+  const { fileIds } = dragging;
+  dragging = null;
+
+  if (!dropped) return;
+  placeFileIds(fileIds, dropped);
+}, { passive: false });
+
+document.addEventListener('touchcancel', () => {
+  if (!dragging) return;
+  ghost.classList.remove('show');
+  dragging.fileIds.forEach(fid => {
+    const fel = document.getElementById('file-' + fid);
+    if (fel) fel.classList.remove('dragging');
+  });
+  document.querySelectorAll('.folder-target').forEach(f => f.classList.remove('drag-over'));
+  dragging = null;
+});
+
+function placeFileIds(fileIds, dropped) {
+  if (!fileIds.length) return false;
+
   // Vérifie que TOUS les fichiers vont dans le bon dossier
   const allCorrect = fileIds.every(fid => {
     const f = FILES.find(x => x.id === fid);
@@ -898,6 +1092,8 @@ document.addEventListener('mouseup', e => {
       if (f) placeFile(fid, f, dropped);
     });
     selected = new Set();
+    syncSelectionAria();
+    return true;
   } else {
     // Shake tous les fichiers mal déposés
     fileIds.forEach(fid => {
@@ -910,8 +1106,9 @@ document.addEventListener('mouseup', e => {
       }
     });
     showWrongMsg(fileIds.length > 1);
+    return false;
   }
-});
+}
 
 // ─── CLEAR SELECTION ───────────────────────────────────────────────────────────
 function clearSelection() {
@@ -936,6 +1133,17 @@ function initDrop(el, folder) {
   el.addEventListener('mouseleave', () => {
     el.classList.remove('drag-over');
   });
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    const fileIds = [...selected].filter(id => document.getElementById('file-' + id));
+    if (!fileIds.length) {
+      instrTitle.textContent = 'Sélectionnez un fichier à ranger';
+      instrSub.textContent = 'Choisissez un fichier avec Entrée ou Espace, puis validez un dossier.';
+      return;
+    }
+    placeFileIds(fileIds, folder.id);
+  });
 }
 
 // ─── PLACE FILE ────────────────────────────────────────────────────────────────
@@ -953,6 +1161,7 @@ function placeFile(fileId, file, folderId) {
   const folderCount = Object.values(placed).filter(f => f === folderId).length;
   const countEl = document.getElementById('count-' + folderId);
   if (countEl) countEl.textContent = folderCount + (folderCount > 1 ? ' fichiers' : ' fichier');
+  updateFolderAria(folderId);
 
   const flash = document.getElementById('flash-' + folderId);
   if (flash) {
@@ -989,6 +1198,7 @@ function updateInstruction() {
 }
 
 function updateInstrSubHint() {
+  syncSelectionAria();
   const n = selected.size;
   const placed_n = Object.keys(placed).length;
   if (placed_n === totalFiles) return;
@@ -996,13 +1206,13 @@ function updateInstrSubHint() {
     instrTitle.textContent = placed_n > 0
       ? `Encore ${totalFiles - placed_n} fichier${totalFiles - placed_n > 1 ? 's' : ''} à ranger`
       : 'Glissez les fichiers dans le bon dossier';
-    instrSub.textContent = 'Ctrl+clic pour sélectionner plusieurs fichiers · Maj+clic pour une plage';
+    instrSub.textContent = 'Entrée/Espace pour sélectionner · puis validez le dossier au clavier';
   } else if (n === 1) {
     instrTitle.textContent = '1 fichier sélectionné';
-    instrSub.textContent   = 'Glissez-le dans le bon dossier · Ctrl+clic pour en ajouter d\'autres';
+    instrSub.textContent   = 'Glissez-le ou choisissez un dossier avec Tab puis Entrée/Espace';
   } else {
     instrTitle.textContent = `${n} fichiers sélectionnés`;
-    instrSub.textContent   = 'Glissez la sélection dans le bon dossier';
+    instrSub.textContent   = 'Glissez la sélection ou validez le dossier au clavier';
   }
 }
 
@@ -1014,7 +1224,7 @@ function showWrongMsg(multi) {
   instrSub.textContent   = 'Chaque fichier a un dossier qui lui correspond.';
   setTimeout(() => {
     instrTitle.textContent = prev;
-    instrSub.textContent   = 'Ctrl+clic pour sélectionner plusieurs fichiers · Maj+clic pour une plage';
+    instrSub.textContent   = 'Entrée/Espace pour sélectionner · puis validez le dossier au clavier';
   }, 1800);
 }
 
@@ -1024,7 +1234,7 @@ function resetAll() {
   instr.classList.remove('success');
   instrIcon.textContent  = '👆';
   instrTitle.textContent = 'Glissez les fichiers dans le bon dossier';
-  instrSub.textContent   = 'Ctrl+clic pour sélectionner plusieurs fichiers · Maj+clic pour une plage';
+  instrSub.textContent   = 'Entrée/Espace pour sélectionner · puis validez le dossier au clavier';
   buildUI();
 }
 
