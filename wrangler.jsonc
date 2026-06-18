@@ -1,12 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "glossaire-du-numerique",
+  "main": "src/worker.mjs",
   "compatibility_date": "2026-05-01",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "Glossaire du numérique"
+    "directory": "Glossaire du numérique",
+    "binding": "ASSETS"
   },
   "compatibility_flags": [
     "nodejs_compat"

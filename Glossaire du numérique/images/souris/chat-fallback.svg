@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="title desc">
+  <title id="title">Photo de chat illustrative</title>
+  <desc id="desc">Illustration locale utilisée si la photo de chat distante ne charge pas.</desc>
+  <rect width="400" height="300" fill="#094D70"/>
+  <circle cx="200" cy="150" r="84" fill="#60B2C8"/>
+  <path d="M132 102 98 58l3 74zM268 102l34-44-3 74z" fill="#60B2C8"/>
+  <path d="M155 152c0 10 8 18 18 18s18-8 18-18-8-18-18-18-18 8-18 18zm54 0c0 10 8 18 18 18s18-8 18-18-8-18-18-18-18 8-18 18z" fill="#032536"/>
+  <path d="M190 190h20l-10 12z" fill="#032536"/>
+  <path d="M200 202c-10 16-32 16-44 2m44-2c10 16 32 16 44 2" fill="none" stroke="#032536" stroke-width="8" stroke-linecap="round"/>
+  <path d="M126 188h-54m58 22H82m192-22h54m-58 22h48" stroke="#032536" stroke-width="7" stroke-linecap="round"/>
+</svg>
