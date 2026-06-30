@@ -1573,6 +1573,13 @@ function fuzzyMatch(query, target) {
 // ─── GÉNÉRATION DES SLIDES ────────────────────────────────────────────────────
 const container = document.getElementById('mainContainer');
 const firstWordId = slugify(glossaire[0].t);
+const POSITION_STORAGE_KEY = 'glossaire-active-section';
+const TRACKED_SECTION_SELECTOR = '#accueil, #sourisMemo, #clavierMemo, #glisserMemo, #phishingMemo, #rechercheMemo, #cookieMemo, .slide';
+let isRestoringPosition = false;
+
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 
 // Icône placeholder (image manquante)
 const PLACEHOLDER_ICON = `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1637,6 +1644,141 @@ glossaire.forEach((item) => {
   container.appendChild(sec);
 });
 
+function getStoredSectionId() {
+  try {
+    return sessionStorage.getItem(POSITION_STORAGE_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+function setStoredSectionId(id) {
+  try {
+    sessionStorage.setItem(POSITION_STORAGE_KEY, id);
+  } catch (e) {
+    // Storage can be unavailable in some private browsing contexts.
+  }
+}
+
+function getHashSectionId() {
+  if (!window.location.hash) return '';
+  try {
+    return decodeURIComponent(window.location.hash.slice(1));
+  } catch (e) {
+    return window.location.hash.slice(1);
+  }
+}
+
+function getNavigationType() {
+  const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+  if (nav) return nav.type;
+  return performance.navigation && performance.navigation.type === 1 ? 'reload' : 'navigate';
+}
+
+function getSectionById(id) {
+  return id ? document.getElementById(id) : null;
+}
+
+function updateSectionHash(id) {
+  if (!id || !history.replaceState) return;
+  if (id === 'accueil') {
+    if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
+    return;
+  }
+  const nextHash = '#' + encodeURIComponent(id);
+  if (window.location.hash !== nextHash) history.replaceState(null, '', nextHash);
+}
+
+function rememberSection(id, updateUrl = true) {
+  if (!getSectionById(id)) return;
+  setStoredSectionId(id);
+  if (updateUrl) updateSectionHash(id);
+}
+
+function navigateToSection(id, behavior = 'smooth') {
+  const section = getSectionById(id);
+  if (!section) return;
+  rememberSection(id);
+  section.scrollIntoView({ behavior, block: 'start' });
+}
+
+function getInitialSectionId() {
+  const hashId = getHashSectionId();
+  if (getSectionById(hashId)) return hashId;
+  if (getNavigationType() !== 'reload') return null;
+  const storedId = getStoredSectionId();
+  return getSectionById(storedId) ? storedId : null;
+}
+
+function getMostVisibleSectionId() {
+  const sections = [...document.querySelectorAll(TRACKED_SECTION_SELECTOR)].filter(section => {
+    return section.id && getComputedStyle(section).display !== 'none';
+  });
+  let bestSection = null;
+  let bestVisibleHeight = 0;
+
+  sections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+    if (visibleHeight > bestVisibleHeight) {
+      bestVisibleHeight = visibleHeight;
+      bestSection = section;
+    }
+  });
+
+  return bestSection ? bestSection.id : null;
+}
+
+function restoreInitialSection() {
+  const sectionId = getInitialSectionId();
+  if (!sectionId || sectionId === 'accueil') return;
+
+  isRestoringPosition = true;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = 'auto';
+      navigateToSection(sectionId, 'auto');
+      document.documentElement.style.scrollBehavior = previousScrollBehavior;
+      window.setTimeout(() => { isRestoringPosition = false; }, 300);
+    });
+  });
+}
+
+function startPositionMemory() {
+  const sections = [...document.querySelectorAll(TRACKED_SECTION_SELECTOR)].filter(section => section.id);
+
+  if (!('IntersectionObserver' in window)) {
+    window.addEventListener('scroll', () => {
+      if (isRestoringPosition) return;
+      const sectionId = getMostVisibleSectionId();
+      if (sectionId) rememberSection(sectionId);
+    }, { passive: true });
+    return;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    if (isRestoringPosition) return;
+    const visibleEntry = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+    if (visibleEntry) rememberSection(visibleEntry.target.id);
+  }, { threshold: [0.6] });
+
+  sections.forEach(section => observer.observe(section));
+}
+
+function saveCurrentSectionBeforeExit() {
+  const sectionId = getMostVisibleSectionId();
+  if (sectionId) setStoredSectionId(sectionId);
+}
+
+restoreInitialSection();
+startPositionMemory();
+window.addEventListener('pagehide', saveCurrentSectionBeforeExit);
+window.addEventListener('beforeunload', saveCurrentSectionBeforeExit);
+
 // ─── TAILLE DYNAMIQUE DES TITRES (toujours sur une ligne) ────────────────────
 function fitTitles() {
   const availableWidth = window.innerWidth - 2 * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--main-align'));
@@ -1697,7 +1839,7 @@ cats.forEach(c => {
       a.onclick = (e) => {
         e.preventDefault();
         applyFilter(c.key);
-        setTimeout(() => document.getElementById(slugify(item.t)).scrollIntoView({behavior:'smooth'}), 50);
+        setTimeout(() => navigateToSection(slugify(item.t)), 50);
       };
       dropdown.appendChild(a);
     });
@@ -1711,7 +1853,7 @@ cats.forEach(c => {
   } else {
     btn.onclick = () => {
       applyFilter('all');
-      window.scrollTo({top: window.innerHeight, behavior: 'smooth'});
+      navigateToSection('sourisMemo');
     };
   }
   filtersEl.appendChild(wrap);
@@ -1820,9 +1962,7 @@ function selectSuggestion(idx) {
   searchSuggs.classList.remove('open');
   searchClear.style.display = 'block';
   applyFilter('all');
-  setTimeout(() => {
-    document.getElementById(slugify(r.item.t)).scrollIntoView({behavior:'smooth'});
-  }, 50);
+  setTimeout(() => navigateToSection(slugify(r.item.t)), 50);
 }
 
 searchInput.addEventListener('input', () => {
@@ -1883,7 +2023,7 @@ function setFontScale(scale) {
 
 // ─── DIVERS ───────────────────────────────────────────────────────────────────
 function startGlossary() {
-  document.getElementById('sourisMemo').scrollIntoView({behavior:'smooth'});
+  navigateToSection('sourisMemo');
 }
 
 document.addEventListener('click', (e) => {
