@@ -190,4 +190,83 @@ Object.assign(GLOSSAIRE_SVGS, {
   telecharger_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="width:80%;height:80%;margin:auto;display:block;"><g transform="translate(0 10)"><path d="M41,55 L41,125 Q41,135 51,135 L149,135 Q159,135 159,125 L159,76 Q159,66 149,66 L112,66 L101,55 Q96,50 88,50 L51,50 Q41,50 41,55" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.78)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><svg x="69" y="63" width="62" height="62" viewBox="0 0 24 24"><path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5l5-5m-5-7v12"/></svg><text x="100" y="130" text-anchor="middle" fill="#ffffff" font-size="9" font-family="Inter,sans-serif" font-weight="700">Téléchargements</text><text x="100" y="154" text-anchor="middle" fill="rgba(255,255,255,0.72)" font-size="8" font-family="Inter,sans-serif" font-weight="normal">Chercher le fichier dans ce dossier</text></g></svg>`,
 });
 
+const BIG_ICON_STYLE = 'width:92%;height:92%;margin:auto;display:block;';
+const ICON_STROKE = '#ffffff';
+const ICON_SOFT_FILL = 'rgba(255,255,255,0.055)';
+const ICON_SOFT_STROKE = 'rgba(255,255,255,0.78)';
+const ICON_TEXT = 'rgba(255,255,255,0.74)';
+
+const TABLER_ICON_PATHS = {
+  addressBook: `<path d="M20 6v12a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2z"/><path d="M10 8h6M10 12h6M10 16h4M4 8h3M4 12h3M4 16h3"/>`,
+  bluetooth: `<path d="M7 8l10 8l-5 4v-16l5 4l-10 8"/><path d="M3 12h4M17 12h4"/>`,
+  check: `<path d="M5 12l5 5l10 -10"/>`,
+  download: `<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2M7 11l5 5l5 -5M12 4v12"/>`,
+  menu: `<path d="M4 6h16M4 12h16M4 18h16"/>`,
+  message: `<path d="M8 9h8M8 13h6"/><path d="M5 19l-2 2v-16a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-11l-4 4"/>`,
+  microphone: `<path d="M9 5a3 3 0 0 1 6 0v5a3 3 0 0 1 -6 0zM5 10a7 7 0 0 0 14 0M8 21h8M12 17v4"/>`,
+  phone: `<path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -16 -16a2 2 0 0 1 2 -2"/>`,
+  refresh: `<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/>`,
+  search: `<path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0M21 21l-6 -6"/>`,
+  settings: `<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/>`,
+  sliders: `<path d="M4 10a2 2 0 1 0 4 0a2 2 0 0 0 -4 0M6 4v4M6 12v8M10 16a2 2 0 1 0 4 0a2 2 0 0 0 -4 0M12 4v10M12 18v2M16 7a2 2 0 1 0 4 0a2 2 0 0 0 -4 0M18 4v1M18 9v11"/>`,
+  user: `<path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>`,
+  video: `<path d="M15 10l4.553 -2.276a1 1 0 0 1 1.447 .894v6.764a1 1 0 0 1 -1.447 .894l-4.553 -2.276v-4z"/><path d="M3 8a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"/>`,
+  wifi: `<path d="M5 12.55a11 11 0 0 1 14.08 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>`
+};
+
+function iconSvg(name, x, y, size, strokeWidth = 1.85) {
+  return `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox="0 0 24 24"><g fill="none" stroke="${ICON_STROKE}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${strokeWidth}">${TABLER_ICON_PATHS[name]}</g></svg>`;
+}
+
+function iconCaption(text, y = 164, size = 8) {
+  return `<text x="100" y="${y}" text-anchor="middle" fill="${ICON_TEXT}" font-size="${size}" font-family="Inter,sans-serif" font-weight="normal">${text}</text>`;
+}
+
+function panel(x, y, width, height, rx = 12) {
+  return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${rx}" fill="${ICON_SOFT_FILL}" stroke="${ICON_SOFT_STROKE}" stroke-width="1.8"/>`;
+}
+
+function iconBlock(name, caption, options = {}) {
+  const size = options.size || 112;
+  const x = (200 - size) / 2;
+  const y = options.y || 40;
+  return `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${options.before || ''}${iconSvg(name, x, y, size, options.strokeWidth || 1.85)}${options.after || ''}${iconCaption(caption, options.captionY || 164, options.captionSize || 8)}</g></svg>`;
+}
+
+function iconButton(x, y, width, height, text, iconName) {
+  return `${panel(x, y, width, height, 18)}${iconSvg(iconName, x + 12, y + 9, 34, 2.1)}<text x="${x + width / 2 + 16}" y="${y + height / 2 + 5}" text-anchor="middle" fill="${ICON_STROKE}" font-size="11" font-family="Inter,sans-serif" font-weight="700">${text}</text>`;
+}
+
+Object.assign(GLOSSAIRE_SVGS, {
+  telecharger_comprendre: iconBlock('download', "Un fichier arrive sur l'appareil", { size: 116, y: 38 }),
+  telecharger_reconnaitre: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(42, 36, 116, 34, 10)}<text x="100" y="58" text-anchor="middle" fill="${ICON_TEXT}" font-size="10" font-family="Inter,sans-serif">document.pdf</text>${iconButton(36, 86, 128, 50, 'Télécharger', 'download')}${iconCaption("Le bouton lance la récupération", 164)}</g></svg>`,
+  telecharger_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)"><path d="M30,66 L30,132 Q30,142 40,142 L160,142 Q170,142 170,132 L170,82 Q170,72 160,72 L112,72 L101,61 Q96,56 88,56 L40,56 Q30,56 30,66" fill="${ICON_SOFT_FILL}" stroke="${ICON_SOFT_STROKE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${iconSvg('download', 58, 56, 84, 2)}<text x="100" y="137" text-anchor="middle" fill="${ICON_STROKE}" font-size="10" font-family="Inter,sans-serif" font-weight="700">Téléchargements</text>${iconCaption("Le fichier arrive dans ce dossier", 164)}</g></svg>`,
+
+  bluetooth_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(28, 70, 48, 58, 12)}${panel(124, 70, 48, 58, 12)}${iconSvg('phone', 39, 82, 26, 1.7)}${iconSvg('video', 135, 82, 26, 1.7)}<path d="M78 99h16M106 99h16" fill="none" stroke="${ICON_SOFT_STROKE}" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 5"/>${iconSvg('bluetooth', 70, 52, 60, 1.9)}${iconCaption("Les deux appareils sont associés", 164)}</g></svg>`,
+
+  recherche_comprendre: iconBlock('search', "La loupe sert à chercher", { size: 118, y: 38 }),
+  recherche_reconnaitre: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(24, 66, 152, 42, 21)}${iconSvg('search', 37, 74, 26, 2.1)}<text x="108" y="92" text-anchor="middle" fill="${ICON_STROKE}" font-size="10" font-family="Inter,sans-serif">horaires mairie</text>${iconCaption("Taper quelques mots-clés", 164)}</g></svg>`,
+  recherche_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(38, 42, 124, 92, 12)}<text x="58" y="62" fill="${ICON_STROKE}" font-size="9" font-family="Inter,sans-serif" font-weight="700">Résultats</text><path d="M56 78h88M56 98h72M56 118h96" stroke="${ICON_SOFT_STROKE}" stroke-width="4" stroke-linecap="round"/>${iconSvg('search', 112, 44, 38, 2)}${iconCaption("Cliquer sur le résultat utile", 164)}</g></svg>`,
+
+  menu_comprendre: iconBlock('menu', "Les traits ouvrent le menu", { size: 118, y: 40, strokeWidth: 2 }),
+  menu_reconnaitre: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(46, 44, 108, 98, 12)}${iconSvg('menu', 74, 52, 52, 2)}<path d="M62 94h76M62 114h58M62 132h68" stroke="${ICON_SOFT_STROKE}" stroke-width="4" stroke-linecap="round"/>${iconCaption("Le menu affiche des options", 164)}</g></svg>`,
+  menu_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(44, 44, 112, 98, 12)}<rect x="56" y="94" width="88" height="28" rx="10" fill="rgba(255,255,255,0.12)" stroke="${ICON_SOFT_STROKE}" stroke-width="1.4"/>${iconSvg('check', 62, 96, 24, 2.4)}<text x="106" y="112" text-anchor="middle" fill="${ICON_STROKE}" font-size="10" font-family="Inter,sans-serif" font-weight="700">Réglages</text>${iconSvg('menu', 74, 52, 52, 2)}${iconCaption("Choisir la ligne souhaitée", 164)}</g></svg>`,
+
+  miseajour_comprendre: iconBlock('refresh', "Le logiciel se renouvelle", { size: 120, y: 36, strokeWidth: 1.9 }),
+  miseajour_reconnaitre: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(36, 48, 128, 80, 14)}${iconSvg('refresh', 50, 58, 46, 2)}<text x="118" y="78" text-anchor="middle" fill="${ICON_STROKE}" font-size="10" font-family="Inter,sans-serif" font-weight="700">Nouvelle version</text><rect x="96" y="92" width="52" height="22" rx="11" fill="rgba(255,255,255,0.14)" stroke="${ICON_SOFT_STROKE}" stroke-width="1.2"/><text x="122" y="107" text-anchor="middle" fill="${ICON_STROKE}" font-size="8" font-family="Inter,sans-serif" font-weight="700">Mettre à jour</text>${iconCaption("Un message propose l'installation", 164)}</g></svg>`,
+  miseajour_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${iconSvg('refresh', 44, 36, 112, 1.75)}<circle cx="137" cy="123" r="22" fill="rgba(255,255,255,0.12)" stroke="${ICON_SOFT_STROKE}" stroke-width="1.6"/>${iconSvg('check', 125, 111, 24, 2.5)}${iconCaption("Redémarrer si demandé", 164)}</g></svg>`,
+
+  parametres_comprendre: iconBlock('settings', "La roue dentée ouvre les réglages", { size: 118, y: 36, strokeWidth: 1.7 }),
+  parametres_reconnaitre: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(42, 42, 116, 100, 14)}${iconSvg('sliders', 64, 50, 72, 1.8)}${iconCaption("Modifier les options utiles", 164)}</g></svg>`,
+  parametres_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(42, 42, 116, 100, 14)}<path d="M62 72h76M62 104h76" stroke="${ICON_SOFT_STROKE}" stroke-width="4" stroke-linecap="round"/><circle cx="128" cy="72" r="10" fill="${ICON_STROKE}"/><circle cx="82" cy="104" r="10" fill="${ICON_STROKE}"/>${iconSvg('settings', 72, 50, 56, 1.6)}${iconCaption("Vérifier avant de changer", 164)}</g></svg>`,
+
+  appelvideo_comprendre: iconBlock('video', "Voir et entendre la personne", { size: 122, y: 36, strokeWidth: 1.8 }),
+  appelvideo_reconnaitre: iconBlock('phone', "Sans caméra, seulement le son", { size: 112, y: 40, strokeWidth: 1.8 }),
+  appelvideo_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(42, 44, 116, 96, 16)}${iconSvg('video', 58, 54, 42, 1.8)}${iconSvg('microphone', 104, 54, 42, 1.8)}${iconSvg('wifi', 80, 96, 42, 1.9)}${iconCaption("Vérifier caméra, micro et connexion", 164)}</g></svg>`,
+
+  contact_comprendre: iconBlock('addressBook', "Une fiche dans le répertoire", { size: 114, y: 38, strokeWidth: 1.65 }),
+  contact_reconnaitre: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)">${panel(42, 42, 116, 100, 14)}${iconSvg('user', 74, 48, 52, 1.7)}<path d="M66 114h68M76 130h48" stroke="${ICON_SOFT_STROKE}" stroke-width="4" stroke-linecap="round"/>${iconCaption("Nom, téléphone et adresse mail", 164)}</g></svg>`,
+  contact_agir: `<svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" style="${BIG_ICON_STYLE}"><g transform="translate(0 4)"><circle cx="72" cy="86" r="34" fill="${ICON_SOFT_FILL}" stroke="${ICON_SOFT_STROKE}" stroke-width="1.8"/>${iconSvg('phone', 50, 64, 44, 1.8)}<circle cx="128" cy="86" r="34" fill="${ICON_SOFT_FILL}" stroke="${ICON_SOFT_STROKE}" stroke-width="1.8"/>${iconSvg('message', 106, 64, 44, 1.8)}${iconCaption("Appeler ou envoyer un message", 164)}</g></svg>`
+});
+
 if (typeof module !== "undefined") module.exports = GLOSSAIRE_SVGS;
